@@ -1,5 +1,6 @@
 PROGRAM_VERSION ?= E0.0.0
 .DEFAULT_GOAL := macos-arm64
+#.SILENT:
 
 # === Project Structure ===
 
@@ -12,7 +13,7 @@ INCLUDE_DIR   := include
 # Common Defaults
 CC          ?= clang
 CPPFLAGS    := -I$(INCLUDE_DIR)
-CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic# -Werror
+CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic -Werror
 CFLAGS      += -g -O2
 CFLAGS      += -Wshadow -Wconversion -Wsign-conversion
 CFLAGS      += -Wfloat-equal -Wstrict-prototypes -Wundef -Wredundant-decls
@@ -20,7 +21,7 @@ CFLAGS      += -fsanitize=address,undefined -fno-omit-frame-pointer
 LDFLAGS     += -fsanitize=address,undefined -Wl,-fatal_warnings
 
 # Version header generation for release numbering
-VERSION_H   := $(INCLUDE_DIR)/version.h
+VERSION_H := $(INCLUDE_DIR)/version.h
 version_h: | $(INCLUDE_DIR)
 	@echo '#ifndef VERSION_H' > $(VERSION_H)
 	@echo '#define VERSION_H' >> $(VERSION_H)
@@ -29,7 +30,7 @@ version_h: | $(INCLUDE_DIR)
 	@echo '' >> $(VERSION_H)
 	@echo '#endif' >> $(VERSION_H)
 
-.PHONY: version_h all macos-arm64 macos-x86_64 macos-universal\
+.PHONY: all macos-arm64 macos-x86_64 macos-universal\
         windows windows-x86_64 windows-arm64 windows-i686 clean clean-macos clean-windows
 
 all: macos windows
@@ -59,7 +60,7 @@ MACOS_OBJ_DIR_arm64  := $(OBJ_DIR)/macos-arm64
 MACOS_BIN_arm64      := $(MACOS_BIN_DIR)/arm64
 MACOS_OBJS_arm64     := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_arm64)/%.o,$(MACOS_SRCS))
 
-macos-arm64: version_h $(MACOS_BIN_arm64)
+macos-arm64: | $(MACOS_BIN_arm64)
 
 $(MACOS_BIN_arm64): $(MACOS_OBJS_arm64) | $(MACOS_BIN_DIR)
 	@mkdir -p $(dir $@)
@@ -77,7 +78,7 @@ MACOS_OBJ_DIR_x86_64 := $(OBJ_DIR)/macos-x86_64
 MACOS_BIN_x86_64     := $(MACOS_BIN_DIR)/x86_64
 MACOS_OBJS_x86_64    := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_x86_64)/%.o,$(MACOS_SRCS))
 
-macos-x86_64: version_h $(MACOS_BIN_x86_64)
+macos-x86_64: | $(MACOS_BIN_x86_64)
 
 $(MACOS_BIN_DIR):
 	@mkdir -p $(dir $@)
@@ -104,7 +105,7 @@ clean-macos:
 
 # === Cross-compilation to Windows ===
 
-windows: windows-x86_64 windows-arm64 windows-i686
+windows: windows-x86_64 windows-i686 windows-arm64
 
 LLVM_MINGW_ROOT ?= $(HOME)/toolchains/llvm-mingw
 WIN_CC         ?= $(LLVM_MINGW_ROOT)/bin/clang
@@ -140,25 +141,6 @@ WIN_OBJ_DIRS := $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64)
 WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/win-arm64
 WIN_OBJS_arm64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_arm64)/%.o,$(WIN_SRCS))
 
-windows-x86_64: version_h $(WIN_OBJ_DIR_x86_64) $(WIN_BIN_DIR)
-	@echo "Building Windows x86_64 binary"
-	$(MAKE) $(WIN_OBJS_x86_64)
-	$(WIN_CC) $(WIN_CFLAGS_x86_64) $(WIN_OBJS_x86_64) $(WIN_LDFLAGS_x86_64) -o $(WIN_BIN_DIR)/x86_64.exe
-
-windows-i686: version_h $(WIN_BIN_DIR)
-	@mkdir -p $(WIN_OBJ_DIR_i686)
-	@mkdir -p $(WIN_BIN_DIR)
-	$(MAKE) $(WIN_OBJS_i686)
-	@echo "Linking Windows x86 (i686) binary"
-	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_i686) $(WIN_OBJS_i686) $(WIN_LDFLAGS_i686) -o $(WIN_BIN_DIR)/i686.exe
-
-windows-arm64: version_h $(WIN_BIN_DIR)
-	@mkdir -p $(WIN_OBJ_DIR_arm64)
-	@mkdir -p $(WIN_BIN_DIR)
-	$(MAKE) $(WIN_OBJS_arm64)
-	@echo "Linking Windows arm64 binary"
-	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_arm64) $(WIN_OBJS_arm64) $(WIN_LDFLAGS_arm64) -o $(WIN_BIN_DIR)/arm64.exe
-
 $(OBJ_DIR):
 	@mkdir -p $@
 
@@ -179,6 +161,18 @@ $(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
 
 $(WIN_BIN_DIR):
 	@mkdir -p $@
+
+windows-x86_64: $(WIN_BIN_DIR) $(WIN_OBJS_x86_64)
+	@echo "Linking Windows x86_64 binary"
+	$(WIN_CC) --target=$(WIN_TARGET_x86_64) -fuse-ld=lld $(WIN_OBJS_x86_64) $(WIN_LDFLAGS_x86_64) -o $(WIN_BIN_DIR)/x86_64.exe
+
+windows-i686: $(WIN_BIN_DIR) $(WIN_OBJS_i686)
+	@echo "Linking Windows i686 binary"
+	$(WIN_CC) --target=$(WIN_TARGET_i686) -fuse-ld=lld $(WIN_OBJS_i686) $(WIN_LDFLAGS_i686) -o $(WIN_BIN_DIR)/i686.exe
+
+windows-arm64: $(WIN_BIN_DIR) $(WIN_OBJS_arm64)
+	@echo "Linking Windows arm64 binary"
+	$(WIN_CC) --target=$(WIN_TARGET_arm64) -fuse-ld=lld $(WIN_OBJS_arm64) $(WIN_LDFLAGS_arm64) -o $(WIN_BIN_DIR)/arm64.exe
 
 clean-windows:
 	rm -rf $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64) $(WIN_BIN_DIR)
