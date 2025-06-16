@@ -2,13 +2,19 @@ PROGRAM_VERSION ?= E0.0.0
 .DEFAULT_GOAL := macos-arm64
 
 # === Project Structure ===
+
+# Common Folders
 SRC_DIR       := src
 OBJ_DIR       := obj
 BIN_DIR       := bin
 INCLUDE_DIR   := include
-MACOS_BIN_DIR := $(BIN_DIR)/macos
-WIN_BIN_DIR   := $(BIN_DIR)/windows
-VERSION_H     := $(INCLUDE_DIR)/version.h
+
+# Common Defaults
+CC          ?= clang
+CPPFLAGS    := -I$(INCLUDE_DIR)
+CFLAGS      := -Wall -Wextra -pedantic -O2
+LDFLAGS     :=
+VERSION_H   := $(INCLUDE_DIR)/version.h
 
 # Version header generation for release numbering
 version_header: | $(INCLUDE_DIR)
@@ -27,13 +33,6 @@ all: macos-all windows-all
 
 clean: clean-macos clean-windows
 
-# === Defaults/Common ===
-
-CC        ?= clang
-CPPFLAGS  := -I$(INCLUDE_DIR)
-CFLAGS    := -Wall -Wextra -pedantic -O2
-LDFLAGS   :=
-
 # === Source Files ===
 
 ALL_SRC := $(wildcard $(SRC_DIR)/*.c)
@@ -46,6 +45,8 @@ WIN_SRCS   := $(SRCS) $(SRC_DIR)/platform/os_win.c $(SRC_DIR)/main.c
 # === Native Compilation for macOS ===
 
 macos-all: macos-arm64 macos-x86_64 macos-universal
+
+MACOS_BIN_DIR := $(BIN_DIR)/macos
 
 # arm64 architecture
 MACOS_CFLAGS_arm64   := -arch arm64
@@ -101,6 +102,8 @@ WIN_CC         ?= $(LLVM_MINGW_ROOT)/bin/clang
 ifeq ("$(wildcard $(LLVM_MINGW_ROOT)/bin/clang)","")
   $(warning LLVM_MINGW not found at $(LLVM_MINGW_ROOT); Windows builds may fail)
 endif
+
+WIN_BIN_DIR   := $(BIN_DIR)/windows
 
 # x86_64 (64-bit)
 WIN_TARGET_x86_64 := x86_64-w64-windows-gnu
