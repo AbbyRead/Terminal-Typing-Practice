@@ -75,6 +75,9 @@ MACOS_OBJS_x86_64    := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_x86_64)/%.o,$(
 
 macos-x86_64: version_header $(MACOS_BIN_x86_64)
 
+$(MACOS_BIN_DIR):
+	@mkdir -p $(dir $@)
+
 $(MACOS_BIN_x86_64): $(MACOS_OBJS_x86_64) | $(MACOS_BIN_DIR)
 	@mkdir -p $(dir $@)
 	@echo "Linking macOS x86_64 binary: $@"
@@ -147,6 +150,9 @@ windows-arm64: version_header $(WIN_BIN_DIR)
 	$(MAKE) $(WIN_OBJS_arm64)
 	@echo "Linking Windows arm64 binary"
 	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_arm64) $(WIN_OBJS_arm64) $(WIN_LDFLAGS_arm64) -o $(WIN_BIN_DIR)/arm64.exe
+
+$(WIN_BIN_DIR):
+	@mkdir -p $(dir $@)
 
 $(WIN_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
