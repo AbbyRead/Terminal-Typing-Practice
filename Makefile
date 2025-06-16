@@ -12,11 +12,15 @@ INCLUDE_DIR   := include
 # Common Defaults
 CC          ?= clang
 CPPFLAGS    := -I$(INCLUDE_DIR)
-CFLAGS      := -Wall -Wextra -pedantic -O2
-LDFLAGS     :=
-VERSION_H   := $(INCLUDE_DIR)/version.h
+CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic -Werror
+CFLAGS      += -g -O2
+CFLAGS      += -Wshadow -Wconversion -Wsign-conversion
+CFLAGS      += -Wfloat-equal -Wstrict-prototypes -Wundef -Wredundant-decls
+CFLAGS      += -fsanitize=address,undefined -fno-omit-frame-pointer
+LDFLAGS     += -fsanitize=address,undefined -Wl,-fatal_warnings
 
 # Version header generation for release numbering
+VERSION_H   := $(INCLUDE_DIR)/version.h
 version_header: | $(INCLUDE_DIR)
 	@echo "Generating version header $(VERSION_H)"
 	@echo '#ifndef VERSION_H' > $(VERSION_H)
