@@ -1,6 +1,6 @@
 PROGRAM_VERSION ?= E0.0.0
 .DEFAULT_GOAL := macos-arm64
-#.SILENT:
+.SILENT:
 
 # === Project Structure ===
 
