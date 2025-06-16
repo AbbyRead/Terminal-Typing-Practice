@@ -27,33 +27,28 @@ all: macos-all windows-all
 
 clean: clean-macos clean-windows
 
-# === Compiler Setup (macOS only) ===
+# === Defaults/Common ===
+
 CC        ?= clang
 CPPFLAGS  := -I$(INCLUDE_DIR)
-CFLAGS    := -Wall -Wextra -pedantic -O2 -arch x86_64 -arch arm64
+CFLAGS    := -Wall -Wextra -pedantic -O2
 LDFLAGS   :=
 
 # === Source Files ===
+
 ALL_SRC := $(wildcard $(SRC_DIR)/*.c)
 SRCS := $(filter-out $(SRC_DIR)/main.c, $(ALL_SRC))
 
+# platform-specific
 MACOS_SRCS := $(SRCS) $(SRC_DIR)/platform/os_mac.c $(SRC_DIR)/main.c
 WIN_SRCS   := $(SRCS) $(SRC_DIR)/platform/os_win.c $(SRC_DIR)/main.c
 
-# === macOS ===
+# === Native Compilation for macOS ===
 
 macos-all: macos-arm64 macos-x86_64 macos-universal
 
-# Universal binary created from per-arch binaries
-macos-universal: macos-arm64 macos-x86_64
-	@echo "Creating macOS universal binary with lipo"
-	@lipo -create \
-		$(MACOS_BIN_DIR)/arm64 \
-		$(MACOS_BIN_DIR)/x86_64 \
-		-output $(MACOS_BIN_DIR)/universal
-
-# === macOS arm64 ===
-MACOS_CFLAGS_arm64   := -Wall -Wextra -pedantic -O2 -arch arm64
+# arm64 architecture
+MACOS_CFLAGS_arm64   := -arch arm64
 MACOS_LDFLAGS_arm64  := -arch arm64
 MACOS_OBJ_DIR_arm64  := $(OBJ_DIR)/macos-arm64
 MACOS_BIN_arm64      := $(MACOS_BIN_DIR)/arm64
@@ -68,10 +63,10 @@ $(MACOS_BIN_arm64): $(MACOS_OBJS_arm64) | $(MACOS_BIN_DIR)
 
 $(MACOS_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(MACOS_CFLAGS_arm64) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MACOS_CFLAGS_arm64) -c $< -o $@
 
-# === macOS x86_64 ===
-MACOS_CFLAGS_x86_64  := -Wall -Wextra -pedantic -O2 -arch x86_64
+# x86_64 architecture
+MACOS_CFLAGS_x86_64  := -arch x86_64
 MACOS_LDFLAGS_x86_64 := -arch x86_64
 MACOS_OBJ_DIR_x86_64 := $(OBJ_DIR)/macos-x86_64
 MACOS_BIN_x86_64     := $(MACOS_BIN_DIR)/x86_64
@@ -86,7 +81,15 @@ $(MACOS_BIN_x86_64): $(MACOS_OBJS_x86_64) | $(MACOS_BIN_DIR)
 
 $(MACOS_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(MACOS_CFLAGS_x86_64) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MACOS_CFLAGS_x86_64) -c $< -o $@
+
+# Universal binary created from per-arch binaries
+macos-universal: macos-arm64 macos-x86_64
+	@echo "Creating macOS universal binary with lipo"
+	@lipo -create \
+		$(MACOS_BIN_DIR)/arm64 \
+		$(MACOS_BIN_DIR)/x86_64 \
+		-output $(MACOS_BIN_DIR)/universal
 
 # === Cross-compilation to Windows ===
 
