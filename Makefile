@@ -31,7 +31,8 @@ version_header: | $(INCLUDE_DIR)
 
 all: macos-all windows-all
 
-clean: clean-macos clean-windows
+clean:
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # === Source Files ===
 
@@ -94,6 +95,9 @@ macos-universal: macos-arm64 macos-x86_64
 		$(MACOS_BIN_DIR)/arm64 \
 		$(MACOS_BIN_DIR)/x86_64 \
 		-output $(MACOS_BIN_DIR)/universal
+
+clean-macos:
+	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_x86_64) $(MAC_BIN_DIR)
 
 # === Cross-compilation to Windows ===
 
@@ -167,5 +171,4 @@ $(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c
 	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_arm64) -c $< -o $@
 
 clean-windows:
-	@echo "Cleaning build artifacts"
 	rm -rf $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64) $(WIN_BIN_DIR)
