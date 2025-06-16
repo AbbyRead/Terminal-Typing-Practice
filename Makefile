@@ -20,7 +20,7 @@ version_header: | $(INCLUDE_DIR)
 	@echo '' >> $(VERSION_H)
 	@echo '#endif' >> $(VERSION_H)
 
-.PHONY: version_header all macos macos-arm64 macos-x86_64 macos-universal-dist \
+.PHONY: version_header all macos-arm64 macos-x86_64 macos-universal\
         windows-all windows-x86_64 windows-arm64 windows-i686 clean clean-macos clean-windows
 
 all: macos-all windows-all
@@ -43,6 +43,7 @@ WIN_SRCS   := $(SRCS) $(SRC_DIR)/platform/os_win.c $(SRC_DIR)/main.c
 # === macOS ===
 
 macos-all: macos-arm64 macos-x86_64 macos-universal
+
 macos-universal: version_header $(MACOS_BIN_DIR)/typebelow
 
 # arm64
@@ -82,11 +83,10 @@ $(MACOS_BIN_DIR)/typebelow: $(MACOS_OBJS) | $(MACOS_BIN_DIR)
 
 clean-macos:
 	@echo "Cleaning macOS build artifacts"
-	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_arm64) $(MACOS_BIN_DIR)
+	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_x86_64) $(MACOS_BIN_DIR)
 
 # === Cross-compilation to Windows ===
 
-# Windows architectures
 windows-all: windows-x86_64 windows-arm64 windows-i686
 
 LLVM_MINGW_ROOT ?= $(HOME)/toolchains/llvm-mingw
@@ -109,24 +109,22 @@ WIN_TARGET_i686 := i686-w64-windows-gnu
 WIN_SYSROOT_i686 := $(LLVM_MINGW_ROOT)/i686-w64-mingw32
 WIN_CFLAGS_i686 := --target=$(WIN_TARGET_i686) --sysroot=$(WIN_SYSROOT_i686)
 WIN_LDFLAGS_i686 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIR_i686   := $(OBJ_DIR)/win-i686
-WIN_OBJS_i686  := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_i686)/%.o,$(WIN_SRCS))
+WIN_OBJ_DIR_i686 := $(OBJ_DIR)/win-i686
+WIN_OBJS_i686 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_i686)/%.o,$(WIN_SRCS))
 
 # ARM64
 WIN_TARGET_ARM64 := aarch64-w64-windows-gnu
 WIN_SYSROOT_ARM64 := $(LLVM_MINGW_ROOT)/aarch64-w64-mingw32
 WIN_CFLAGS_ARM64 := --target=$(WIN_TARGET_ARM64) --sysroot=$(WIN_SYSROOT_ARM64)
 WIN_LDFLAGS_ARM64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIR_arm64  := $(OBJ_DIR)/win-arm64
+WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/win-arm64
 WIN_OBJS_arm64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_arm64)/%.o,$(WIN_SRCS))
 
-# Windows x86_64 build
 windows-x86_64: version_header $(WIN_OBJ_DIR_x86_64) $(WIN_BIN_DIR)
 	@echo "Building Windows x86_64 binary"
 	$(MAKE) $(WIN_OBJS_x86_64)
 	$(WIN_CC) $(WIN_CFLAGS_x86_64) $(WIN_OBJS_x86_64) $(WIN_LDFLAGS_x86_64) -o $(WIN_BIN_DIR)/x86_64.exe
 
-# Windows x86_32 build
 windows-i686: version_header $(WIN_BIN_DIR)
 	@mkdir -p $(WIN_OBJ_DIR_i686)
 	@mkdir -p $(WIN_BIN_DIR)
@@ -134,7 +132,6 @@ windows-i686: version_header $(WIN_BIN_DIR)
 	@echo "Linking Windows x86 (i686) binary"
 	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_i686) $(WIN_OBJS_i686) $(WIN_LDFLAGS_i686) -o $(WIN_BIN_DIR)/i686.exe
 
-# Windows arm64 build
 windows-arm64: version_header $(WIN_BIN_DIR)
 	@mkdir -p $(WIN_OBJ_DIR_arm64)
 	@mkdir -p $(WIN_BIN_DIR)
@@ -142,7 +139,6 @@ windows-arm64: version_header $(WIN_BIN_DIR)
 	@echo "Linking Windows ARM64 binary"
 	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_ARM64) $(WIN_OBJS_arm64) $(WIN_LDFLAGS_ARM64) -o $(WIN_BIN_DIR)/arm64.exe
 
-# Object rules
 $(WIN_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_x86_64) -c $< -o $@
