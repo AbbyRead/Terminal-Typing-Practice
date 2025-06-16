@@ -44,46 +44,49 @@ WIN_SRCS   := $(SRCS) $(SRC_DIR)/platform/os_win.c $(SRC_DIR)/main.c
 
 macos-all: macos-arm64 macos-x86_64 macos-universal
 
-macos-universal: version_header $(MACOS_BIN_DIR)/typebelow
+# Universal binary created from per-arch binaries
+macos-universal: macos-arm64 macos-x86_64
+	@echo "Creating macOS universal binary with lipo"
+	@lipo -create \
+		$(MACOS_BIN_DIR)/arm64 \
+		$(MACOS_BIN_DIR)/x86_64 \
+		-output $(MACOS_BIN_DIR)/universal
 
-# arm64
+# === macOS arm64 ===
 MACOS_CFLAGS_arm64   := -Wall -Wextra -pedantic -O2 -arch arm64
 MACOS_LDFLAGS_arm64  := -arch arm64
 MACOS_OBJ_DIR_arm64  := $(OBJ_DIR)/macos-arm64
-MACOS_OBJS_arm64  := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_arm64)/%.o,$(MACOS_SRCS))
+MACOS_BIN_arm64      := $(MACOS_BIN_DIR)/arm64
+MACOS_OBJS_arm64     := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_arm64)/%.o,$(MACOS_SRCS))
 
-# x86_64
-MACOS_CFLAGS_x86_64  := -Wall -Wextra -pedantic -O2 -arch x86_64
-MACOS_LDFLAGS_x86_64 := -arch x86_64
-MACOS_OBJ_DIR_x86_64 := $(OBJ_DIR)/macos-x86_64
-MACOS_OBJS_x86_64 := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_x86_64)/%.o,$(MACOS_SRCS))
+macos-arm64: version_header $(MACOS_BIN_arm64)
 
-macos-arm64: version_header $(MACOS_BIN_DIR) $(MACOS_OBJ_DIR_arm64)
+$(MACOS_BIN_arm64): $(MACOS_OBJS_arm64) | $(MACOS_BIN_DIR)
 	@mkdir -p $(dir $@)
-	@echo "Linking macOS arm64 binary"
-	$(CC) $(MACOS_CFLAGS_arm64) $(MACOS_LDFLAGS_arm64) -o $(MACOS_BIN_DIR)/typebelow-arm64 $(MACOS_OBJS_arm64)
-
-macos-x86_64: version_header $(MACOS_BIN_DIR) $(MACOS_OBJ_DIR_x86_64)
-	@mkdir -p $(dir $@)
-	@echo "Linking macOS x86_64 binary"
-	$(CC) $(MACOS_CFLAGS_x86_64) $(MACOS_LDFLAGS_x86_64) -o $(MACOS_BIN_DIR)/typebelow-x86_64 $(MACOS_OBJS_x86_64)
+	@echo "Linking macOS arm64 binary: $@"
+	$(CC) $(MACOS_CFLAGS_arm64) $(LDFLAGS) -o $@ $^
 
 $(MACOS_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(MACOS_CFLAGS_arm64) -c $< -o $@
 
+# === macOS x86_64 ===
+MACOS_CFLAGS_x86_64  := -Wall -Wextra -pedantic -O2 -arch x86_64
+MACOS_LDFLAGS_x86_64 := -arch x86_64
+MACOS_OBJ_DIR_x86_64 := $(OBJ_DIR)/macos-x86_64
+MACOS_BIN_x86_64     := $(MACOS_BIN_DIR)/x86_64
+MACOS_OBJS_x86_64    := $(patsubst $(SRC_DIR)/%.c,$(MACOS_OBJ_DIR_x86_64)/%.o,$(MACOS_SRCS))
+
+macos-x86_64: version_header $(MACOS_BIN_x86_64)
+
+$(MACOS_BIN_x86_64): $(MACOS_OBJS_x86_64) | $(MACOS_BIN_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Linking macOS x86_64 binary: $@"
+	$(CC) $(MACOS_CFLAGS_x86_64) $(LDFLAGS) -o $@ $^
+
 $(MACOS_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(MACOS_CFLAGS_x86_64) -c $< -o $@
-
-$(MACOS_BIN_DIR)/typebelow: $(MACOS_OBJS) | $(MACOS_BIN_DIR)
-	@mkdir -p $(dir $@)
-	@echo "Linking macOS binary $@"
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-
-clean-macos:
-	@echo "Cleaning macOS build artifacts"
-	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_x86_64) $(MACOS_BIN_DIR)
 
 # === Cross-compilation to Windows ===
 
@@ -112,11 +115,11 @@ WIN_LDFLAGS_i686 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,cons
 WIN_OBJ_DIR_i686 := $(OBJ_DIR)/win-i686
 WIN_OBJS_i686 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_i686)/%.o,$(WIN_SRCS))
 
-# ARM64
-WIN_TARGET_ARM64 := aarch64-w64-windows-gnu
-WIN_SYSROOT_ARM64 := $(LLVM_MINGW_ROOT)/aarch64-w64-mingw32
-WIN_CFLAGS_ARM64 := --target=$(WIN_TARGET_ARM64) --sysroot=$(WIN_SYSROOT_ARM64)
-WIN_LDFLAGS_ARM64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
+# arm64
+WIN_TARGET_arm64 := aarch64-w64-windows-gnu
+WIN_SYSROOT_arm64 := $(LLVM_MINGW_ROOT)/aarch64-w64-mingw32
+WIN_CFLAGS_arm64 := --target=$(WIN_TARGET_arm64) --sysroot=$(WIN_SYSROOT_arm64)
+WIN_LDFLAGS_arm64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
 WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/win-arm64
 WIN_OBJS_arm64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_arm64)/%.o,$(WIN_SRCS))
 
@@ -136,8 +139,8 @@ windows-arm64: version_header $(WIN_BIN_DIR)
 	@mkdir -p $(WIN_OBJ_DIR_arm64)
 	@mkdir -p $(WIN_BIN_DIR)
 	$(MAKE) $(WIN_OBJS_arm64)
-	@echo "Linking Windows ARM64 binary"
-	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_ARM64) $(WIN_OBJS_arm64) $(WIN_LDFLAGS_ARM64) -o $(WIN_BIN_DIR)/arm64.exe
+	@echo "Linking Windows arm64 binary"
+	$(WIN_CC) -fuse-ld=lld $(WIN_CFLAGS_arm64) $(WIN_OBJS_arm64) $(WIN_LDFLAGS_arm64) -o $(WIN_BIN_DIR)/arm64.exe
 
 $(WIN_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
@@ -149,7 +152,7 @@ $(WIN_OBJ_DIR_i686)/%.o: $(SRC_DIR)/%.c
 
 $(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_ARM64) -c $< -o $@
+	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_arm64) -c $< -o $@
 
 clean-windows:
 	@echo "Cleaning build artifacts"
