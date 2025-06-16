@@ -3,4 +3,4 @@
 
 // Typing logic interface
 
-#endif // CORE_H
+#endif
