@@ -1,8 +1,30 @@
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <io.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <conio.h>
+#include <windows.h>
 #include <string.h>
 #include "platform.h"
+
+static size_t buffer_size = 4096;
+static size_t total_read = 0;
+
+char *platform_read_stdin(void) {
+	if (!_isatty(fileno(stdin))) {
+		FILE *source = stdin;
+	} else {
+		exit(EXIT_FAILURE);
+	}
+
+	char *buffer = malloc(size_needed);
+	if (!buffer) {
+		GlobalUnlock(hData);
+		CloseClipboard();
+		return NULL;
+	}
+}
 
 char *platform_get_clipboard(void) {
 	if (!OpenClipboard(NULL)) {
@@ -42,4 +64,13 @@ char *platform_get_clipboard(void) {
 	CloseClipboard();
 
 	return buffer;
+}
+
+static int16_t get_terminal_height(){
+	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+        return 24; // a common number of lines on failure
+    }
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	return (int16_t)(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
 }

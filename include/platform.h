@@ -12,8 +12,8 @@ void platform_cleanup(void);
 char *platform_get_clipboard(void);
 
 // Terminal size
-int platform_get_terminal_height(void);
-int platform_get_terminal_width(void);
+int16_t platform_get_terminal_height(void);
+int16_t platform_get_terminal_width(void);
 
 // Cursor control
 void platform_set_cursor_pos(int row, int col);
