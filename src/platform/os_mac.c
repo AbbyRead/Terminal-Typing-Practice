@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 #include "platform.h"
+#include "usage.h"
+
+enum Platform platform = MACOS;
+
+void echo_usage(const char *prog_name) {
+	(void)prog_name;
+	fprintf(stderr, "%s", usage_text);
+	fprintf(stderr, "%zu\n", usage_text_length);
+}
 
 char *platform_get_clipboard(void) {
 	FILE *pipe = popen("pbpaste", "r");

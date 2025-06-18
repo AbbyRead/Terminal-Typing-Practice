@@ -8,8 +8,11 @@
 #include <string.h>
 #include "platform.h"
 
+#define isatty _isatty
+
 static size_t buffer_size = 4096;
 static size_t total_read = 0;
+enum Platform platform = WINDOWS;
 
 char *platform_read_stdin(void) {
 	if (!_isatty(fileno(stdin))) {

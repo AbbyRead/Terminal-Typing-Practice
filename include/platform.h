@@ -1,7 +1,11 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include <stdio.h>
+
 // Cross-platform abstractions (e.g., timing, clipboard, file handling)
+
+enum Platform {MACOS, WINDOWS};
 
 void platform_init(void);
 void platform_cleanup(void);

@@ -1,1 +1,1 @@
-void ui_placeholder(void) {}
+void placeholder(void) {}
