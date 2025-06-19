@@ -1,14 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
 
-#include "platform.h"
-
-int main(int argc, char *argv[]) {
-	(void)argc;
-	(void)argv;
-	char *buffer = platform_get_clipboard();
-	if (!buffer) return 1;
-	printf("%s\n", buffer);
-	free(buffer);
-	return 0;
+#include <unistd.h>
+int main(int argc, char **argv) {
+    int opt;
+    while ((opt = getopt(argc, argv, "hv")) != -1) {
+        switch (opt) {
+        case 'h': return 0;
+        case 'v': return 0;
+        }
+    }
+    return 0;
 }
