@@ -1,46 +1,15 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#ifdef _WIN32
+#include <stdio.h>
 
-#include <io.h>
-#include <windows.h>
-#define isatty _isatty
-#define fileno _fileno
-#define USER_INPUT_DEVICE "CON"
-static inline int get_terminal_height() {
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
-		return 24;
-	}
-	int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	return (height > 0) ? height : 24;
-}
-static inline void move_cursor_up(int lines) {
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    COORD pos;
-    GetConsoleScreenBufferInfo(hOut, &csbi);
-    pos.X = 0;
-	pos.Y = (csbi.dwCursorPosition.Y >= lines) ? csbi.dwCursorPosition.Y - lines : 0;
-    SetConsoleCursorPosition(hOut, pos);
-}
+// Cross-platform abstractions (e.g., timing, clipboard, file handling)
 
-#else // POSIX
-#include <sys/ioctl.h>
-#include <unistd.h>
-#define USER_INPUT_DEVICE "/dev/tty"
-static inline int get_terminal_height() {
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	int height = w.ws_row;
-	if (height <= 0) height = 24;
-    return height;
-}
-static inline void move_cursor_up(int lines) {
-    printf("\033[%dA", lines);
-}
+enum Platform {MACOS, WINDOWS};
 
-#endif // Windows vs. POSIX
+extern enum Platform platform;
 
-#endif // PLATFORM_H
+char *platform_get_clipboard(void);
+char *platform_read_stdin(void);
+static int get_terminal_height(void);
+
