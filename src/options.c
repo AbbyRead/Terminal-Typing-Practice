@@ -59,13 +59,13 @@ void print_usage(const char *progname) {
 		text = NULL;
 		
         if (o->has_arg == required_argument) {
-    		asprintf(&text, " <%s>", longopts_help[i].arg_name ? : "ARG");
+    		asprintf(&text, " <%s>", longopts_help[i].arg_name ? longopts_help[i].arg_name : "ARG");
 			printf("%s", text);
 			char_count += strlen(text);
 			free(text);
 			text = NULL;
 		} else if (o->has_arg == optional_argument) {
-            asprintf(&text, " [<%s>]", longopts_help[i].arg_name ? : "ARG");
+            asprintf(&text, " [<%s>]", longopts_help[i].arg_name ? longopts_help[i].arg_name : "ARG");
 			printf("%s", text);
 			char_count += strlen(text);
 			free(text);

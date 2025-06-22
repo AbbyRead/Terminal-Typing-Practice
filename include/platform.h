@@ -11,5 +11,6 @@ extern enum Platform platform;
 
 char *platform_get_clipboard(void);
 char *platform_read_stdin(void);
-static int get_terminal_height(void);
+//static int get_terminal_height(void);
 
+#endif

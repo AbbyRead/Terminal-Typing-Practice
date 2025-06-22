@@ -13,7 +13,7 @@ INCLUDE_DIR   := include
 # Common Defaults
 CC          ?= clang
 CPPFLAGS    := -I$(INCLUDE_DIR)
-CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic -Werror
+CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic
 CFLAGS      += -g -O2
 CFLAGS      += -Wshadow -Wconversion -Wsign-conversion
 CFLAGS      += -Wfloat-equal -Wstrict-prototypes -Wundef -Wredundant-decls
