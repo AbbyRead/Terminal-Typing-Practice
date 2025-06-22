@@ -7,6 +7,6 @@ int main(int argc, char **argv) {
         case 'h': return 0;
         case 'v': return 0;
         }
-    }
+	}
     return 0;
 }
