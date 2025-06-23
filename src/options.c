@@ -20,13 +20,13 @@ struct option {
 
 */
 
-struct usage_wrap {
+static struct usage_wrap {
 	struct option opt;
 	const char *arg;
 	const char *desc;
 }
 
-enum { HELP, START, VERSION, OPT_COUNT };
+static enum { HELP, START, VERSION, OPT_COUNT };
 
 static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 	[HELP] = {
@@ -62,7 +62,6 @@ static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 static struct option *long_opts = (struct option *)opt_usage;  // type-compatible array slice
 
 int parse_options(int argc, const char * const *argv) {
-
 	int option;
 	int line = 1;
 	//opterr = 0;
@@ -99,7 +98,7 @@ int parse_options(int argc, const char * const *argv) {
 	return 0;
 }
 
-void print_usage(const char *progname) {
+static void print_usage(const char *progname) {
     printf("Usage:\n"
 	"  %s [options] filename    Source text from an existing file\n"
 	"  %s [options] -           Source from piping/redirection\n"
