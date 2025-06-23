@@ -22,36 +22,38 @@ struct option {
 
 enum { HELP, START, VERSION, OPT_COUNT };
 
-static struct option long_opts[OPT_COUNT + 1] = { {0} };  // +1 for the null terminator
-struct usage_wrap {
-	struct option opt;
-	char *arg;
-	char *desc;
+static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
+	[HELP] = {
+		.opt = { 
+			.name = "help", 
+			.has_arg = no_argument, 
+			.flag = NULL, 
+			.val = 'h' },
+		.arg  = NULL,
+		.desc = "Show this help message"
+	},
+	[START] = {
+		.opt = { 
+			.name = "start", 
+			.has_arg = required_argument, 
+			.flag = NULL, 
+			.val = 's' },
+		.arg  = "line_number",
+		.desc = "Specify starting line number"
+	},
+	[VERSION] = {
+		.opt = { 
+			.name = "version", 
+			.has_arg = no_argument, 
+			.flag = NULL, 
+			.val = 'v'},
+		.arg  = NULL,
+		.desc = "Show version number"
+	},
+	[OPT_COUNT] = {0} // NULL terminator for getopt_long
 };
-struct usage_wrap opt_usage[OPT_COUNT + 1] = { {0}, NULL, NULL};
 
-void init_options(void) {
-	long_opts[HELP].name    	= "help";
-	long_opts[HELP].has_arg 	= no_argument;
-	long_opts[HELP].flag    	= NULL;
-	long_opts[HELP].val     	= 'h';
-	opt_usage[HELP].arg			= NULL;
-	opt_usage[HELP].desc		= "Show this help message";
-
-	long_opts[START].name    	= "start";
-	long_opts[START].has_arg 	= required_argument;
-	long_opts[START].flag    	= NULL;
-	long_opts[START].val     	= 's';
-	opt_usage[START].arg		= "line_number";
-	opt_usage[START].desc		= "Specify starting line number";
-
-	long_opts[VERSION].name    	= "version";
-	long_opts[VERSION].has_arg 	= no_argument;
-	long_opts[VERSION].flag    	= NULL;
-	long_opts[VERSION].val     	= 'v';
-	opt_usage[VERSION].arg		= NULL;
-	opt_usage[VERSION].desc		= "Show version number";
-}
+static struct option *long_opts = (struct option *)opt_usage;  // type-compatible array slice
 
 int parse_options(int argc, const char * const *argv) {
 	init_options();
