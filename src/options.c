@@ -83,3 +83,21 @@ void print_usage(const char *progname) {
 	"  %s                       Read from clipboard, start at line 1\n", 
 	progname, progname, progname);
 }
+
+int parse_options(const int argc, const char const * *argv) {
+	int option;
+	opterr = 0;
+	while ((option = getopt(argc, argv, "hs:v")) != EOF) {
+		switch(option) {
+		case 'h':
+			print_usage(argv);
+			break;
+		case 's':
+			break;
+		case 'v':
+			break;
+		default:
+		}
+	}
+	return 0;
+}
