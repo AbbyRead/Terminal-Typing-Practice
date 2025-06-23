@@ -1,44 +1,44 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include "platform.h"
 #include "options.h"
+#include "buffer.h"
+
+#define INITIAL_SIZE 4096
 
 enum Platform platform = MACOS;
 
-char *platform_get_clipboard(void) {
-	FILE *pipe = popen("pbpaste", "r");
-	if (!pipe) return NULL;
-
-	size_t capacity = 1024;
-	size_t length = 0;
-	char *buffer = malloc(capacity);
-	if (!buffer) {
-		pclose(pipe);
-		return NULL;
+static char *create_buffer(FILE *source_text) {
+	char *buffer = malloc(INITIAL_SIZE);
+	char c;
+	while (!feof(source_text)) {
+		c = fgetc(source_text);
 	}
-
-	int c;
-	while ((c = fgetc(pipe)) != EOF) {
-		if (length + 1 >= capacity) {
-			capacity *= 2;
-			char *newbuf = realloc(buffer, capacity);
-			if (!newbuf) {
-				free(buffer);
-				pclose(pipe);
-				return NULL;
-			}
-			buffer = newbuf;
-		}
-		buffer[length++] = (char)c;
-	}
-	pclose(pipe);
-
-	if (length == 0) {
-		free(buffer);
-		return NULL;
-	}
-
-	buffer[length] = '\0';
+	
 	return buffer;
+}
+
+char *platform_read_clipboard(void) {
+	FILE *clipboard = popen("pbpaste", "r");
+	if (!clipboard) {
+		perror("Could not read from clipboard");
+		fclose(clipboard);
+		exit(EXIT_FAILURE);
+	} // opened clipboard
+
+	// copy clipboard contents to a buffer
+	char *buffer = create_buffer(clipboard);
+	if (!buffer) {
+		perror("Failed to copy clipboard to buffer");
+		pclose(clipboard);
+		exit(EXIT_FAILURE);
+	} else pclose(clipboard); // got buffer
+
+	return buffer;
+}
+
+char *platform_read_stdin(void) {
+
 }

@@ -9,6 +9,8 @@
 
 
 int main(int argc, char *argv[]) {
-	parse_options(argc, argv);
-}
+	setlocale(LC_CTYPE, "");
 
+	parse_options(argc, argv);
+	return EXIT_SUCCESS;
+}
