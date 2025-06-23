@@ -20,6 +20,12 @@ struct option {
 
 */
 
+struct usage_wrap {
+	struct option opt;
+	const char *arg;
+	const char *desc;
+}
+
 enum { HELP, START, VERSION, OPT_COUNT };
 
 static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
@@ -56,7 +62,6 @@ static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 static struct option *long_opts = (struct option *)opt_usage;  // type-compatible array slice
 
 int parse_options(int argc, const char * const *argv) {
-	init_options();
 
 	int option;
 	int line = 1;
