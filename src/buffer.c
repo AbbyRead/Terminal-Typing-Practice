@@ -50,3 +50,70 @@ char *buffer_copy(FILE *stream) {
 	return buffer;
 }
 
+char **buffer_tokenize_lines(char *full_buffer) {
+	char *buffer_copy = strdup(full_buffer);
+	if (!buffer_copy) {
+		perror("strdup failed");
+		exit(EXIT_FAILURE);
+	}
+
+	char **lines = NULL;
+	size_t count = 0, capacity = 0;
+	char *start = buffer_copy;
+	char *newline;
+
+	while ((newline = strchr(start, '\n')) != NULL) {
+		*newline = '\0'; // replace newline character to terminate string slice
+
+		// Resize array (initially to 8 indices)
+		if (count == capacity) {  // both start at 0
+			// start capacity at 8 really, and double when count matches it
+			size_t new_capacity = capacity == 0 ? 8 : capacity * 2;
+			char **temp = realloc(lines, new_capacity * sizeof(char *));
+			if (!temp) {
+				perror("Failed to grow lines array");
+				free(buffer_copy);
+				free(lines);
+				exit(EXIT_FAILURE);
+			}
+			lines = temp;
+			capacity = new_capacity;
+		}
+
+		// Store line pointer (empty or not)
+		lines[count++] = start;
+
+		start = newline + 1;
+	}
+
+	// Last line (maybe empty)
+	if (count == capacity) {
+		size_t new_capacity = capacity == 0 ? 8 : capacity * 2;
+		char **temp = realloc(lines, new_capacity * sizeof(char *));
+		if (!temp) {
+			perror("Failed to grow lines array for the last actual line");
+			free(buffer_copy);
+			free(lines);
+			exit(EXIT_FAILURE);
+		}
+		lines = temp;
+		capacity = new_capacity;
+	}
+	lines[count++] = start;
+
+	// Null terminate array
+	if (count == capacity) {
+		char **temp = realloc(lines, (capacity + 1) * sizeof(char *));
+		if (!temp) {
+			perror("Failed to grow lines array for terminator");
+			free(buffer_copy);
+			free(lines);
+			exit(EXIT_FAILURE);
+		}
+		lines = temp;
+		capacity++;
+	}
+	lines[count] = NULL;
+	// buffer_copy NOT freed here because the lines array points to parts of it
+	return lines;
+}

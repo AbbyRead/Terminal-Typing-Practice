@@ -8,29 +8,15 @@
 #include "options.h"
 #include "version.h"
 
-/*
-As defined in getopts.h for the getopt_long() function:
-
-struct option {
-	char *name;  // long name
-	int has_arg; // 0, 1, or 2 for no_argument, required_argument, and optional_argument
-	int *flag;   // for conflating options?
-	int val;     // short name
-};
-
-*/
-
 enum IngestMode ingest_mode = UNKNOWN;
 
-static struct usage_wrap {
-	struct option opt;
-	const char *arg;
-	const char *desc;
-}
-
-extern enum IngestMode ingest_mode;
-
 static enum { HELP, START, VERSION, OPT_COUNT };
+
+static struct usage_wrap {
+	struct option opt; // struct "option" as defined in getopt.h
+	const char *arg;   // optional/required option argument name
+	const char *desc;  // help text for this particular option
+}
 
 static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 	[HELP] = {
@@ -96,7 +82,7 @@ int parse_options(int argc, const char * const *argv) {
 		}
 		if (optind >= argc) break;
 	}
-
+	
 	printf("Starting line: %d\n", line);
 
 	return 0;
