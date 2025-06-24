@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 
 #include "buffer.h"
@@ -23,7 +24,6 @@ static void enlarge_buffer(void) {
 }
 
 char *buffer_copy(FILE *stream) {
-	buffer_reset();
 	buffer = malloc(size);
 	if (!buffer) {
 		perror("Failed to allocate buffer");
@@ -51,9 +51,13 @@ char *buffer_copy(FILE *stream) {
 }
 
 char **buffer_tokenize_lines(char *full_buffer) {
+	if (!full_buffer) {
+		perror("Buffer not available to tokenize");
+		exit(EXIT_FAILURE);
+	}
 	char *buffer_copy = strdup(full_buffer);
 	if (!buffer_copy) {
-		perror("strdup failed");
+		perror("Buffer duplication failed");
 		exit(EXIT_FAILURE);
 	}
 

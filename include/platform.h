@@ -9,6 +9,7 @@ enum Platform {MACOS, WINDOWS};
 
 extern enum Platform platform;
 
+void platform_initialize(void);
 char *platform_read_clipboard(void);
 char *platform_read_stdin(void);
 char *platform_read_file(char *file_arg);

@@ -11,6 +11,10 @@
 
 enum Platform platform = WINDOWS;
 
+void platform_initialize(void) {
+	setlocale(LC_CTYPE, "");
+}
+
 char *platform_read_clipboard(void) {
 	if (!OpenClipboard(NULL)) {
 		return NULL;
@@ -39,7 +43,7 @@ char *platform_read_clipboard(void) {
 		return NULL;
 	}
 	WideCharToMultiByte(CP_UTF8, 0, wtext, -1, buffer, size_needed, NULL, NULL);
-	buffer[size_needed - 1] = '\0'
+	buffer[size_needed - 1] = '\0';
 	GlobalUnlock(hData);
 	CloseClipboard();
 	return buffer;
@@ -50,7 +54,7 @@ char *platform_read_stdin(void) {
 		perror("No piped or redirected input detected");
 		exit(EXIT_FAILURE);
 	}
-	FILE *fifo = fopen(stdin, "rb");
+	FILE *fifo = stdin;
 	if (!fifo) {
 		perror("Unable to assign stdin");
 		exit(EXIT_FAILURE);
@@ -82,8 +86,8 @@ char *platform_read_file(char *file_arg) {
 
 static int get_terminal_height(void){
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
-        return 24; // a common number of lines on failure
-    }
+		return 24; // a common number of lines on failure
+	}
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 	return (int16_t)(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);

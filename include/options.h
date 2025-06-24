@@ -5,7 +5,7 @@ enum IngestMode {
     UNKNOWN,
     CLIPBOARD,
     STDIN,
-    FILE
+    FILE_PTR
 };
 
 int parse_options(int argc, char **argv);

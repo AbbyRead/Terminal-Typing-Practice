@@ -16,7 +16,7 @@ static struct usage_wrap {
 	struct option opt; // struct "option" as defined in getopt.h
 	const char *arg;   // optional/required option argument name
 	const char *desc;  // help text for this particular option
-}
+};
 
 static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 	[HELP] = {
@@ -51,7 +51,60 @@ static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
 
 static struct option *long_opts = (struct option *)opt_usage;  // type-compatible array slice
 
-int parse_options(int argc, const char * const *argv) {
+void print_usage(const char *progname) {
+	printf("Usage:\n"
+	"  %s [options] filename    Source text from an existing file\n"
+	"  %s [options] -           Source from piping/redirection\n"
+	"  %s [options]             Source from OS copy/paste clipboard\n\n",
+	progname, progname, progname);
+	puts("Options:");
+
+	for (int i = 0; opt_usage[i].opt.name != NULL; ++i) {
+		char *text = NULL;
+		const struct option *o = &opt_usage[i].opt;
+		int char_count = 2;
+		printf("  ");
+		if (o->val && isprint(o->val)) {
+			asprintf(&text, "-%c, ", o->val);
+			printf("%s", text);
+			char_count += strlen(text);
+			free(text);
+			text = NULL;
+		}
+
+		asprintf(&text, "--%s", o->name);
+		printf("%s", text);
+		char_count += strlen(text);
+		free(text);
+		text = NULL;
+		
+		if (o->has_arg == required_argument) {
+			asprintf(&text, " <%s>", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
+			printf("%s", text);
+			char_count += strlen(text);
+			free(text);
+			text = NULL;
+		} else if (o->has_arg == optional_argument) {
+			asprintf(&text, " [<%s>]", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
+			printf("%s", text);
+			char_count += strlen(text);
+			free(text);
+			text = NULL;
+		}
+		int pad_length = 32 - char_count;
+		if (opt_usage[i].desc)
+			printf("%*s%s", pad_length, " ", opt_usage[i].desc);
+
+		printf("\n");
+	}
+	printf("\nExamples:\n"
+	"  %s -s 10 myfile.txt      Start at line 10 from file\n"
+	"  %s -s -3 -               Start 3 lines from end, read from stdin\n"
+	"  %s                       Read from clipboard, start at line 1\n", 
+	progname, progname, progname);
+}
+
+int parse_options(int argc, char **argv) {
 	int option;
 	int line = 1;
 	//opterr = 0;
@@ -86,68 +139,15 @@ int parse_options(int argc, const char * const *argv) {
 	} else if (strcmp(argv[optind], "-") == 0) {
 		ingest_mode = STDIN;
 	} else {
-		ingest_mode = FILE;
+		ingest_mode = FILE_PTR;
 	}
 
 	printf("Starting line: %d\n", line);
 	switch (ingest_mode) {
 		case CLIPBOARD:	puts("Ingest from clipboard");	break;
 		case STDIN:		puts("Ingest from stdin");		break;
-		case FILE:		puts("Ingest from file");		break;
+		case FILE_PTR:	puts("Ingest from file");		break;
 		default:		puts("Unknown ingest mode");	break;
 	}
-	return EXIT_SUCCESS;
-}
-
-static void print_usage(const char *progname) {
-    printf("Usage:\n"
-	"  %s [options] filename    Source text from an existing file\n"
-	"  %s [options] -           Source from piping/redirection\n"
-	"  %s [options]             Source from OS copy/paste clipboard\n\n",
-	progname, progname, progname);
-    puts("Options:");
-
-    for (int i = 0; opt_usage[i].opt.name != NULL; ++i) {
-		char *text = NULL;
-        const struct option *o = &opt_usage[i].opt;
-		int char_count = 2;
-        printf("  ");
-        if (o->val && isprint(o->val)) {
-			asprintf(&text, "-%c, ", o->val);
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
-		}
-
-        asprintf(&text, "--%s", o->name);
-		printf("%s", text);
-		char_count += strlen(text);
-		free(text);
-		text = NULL;
-		
-        if (o->has_arg == required_argument) {
-    		asprintf(&text, " <%s>", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
-		} else if (o->has_arg == optional_argument) {
-            asprintf(&text, " [<%s>]", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
-		}
-		int pad_length = 32 - char_count;
-        if (opt_usage[i].desc)
-            printf("%*s%s", pad_length, " ", opt_usage[i].desc);
-
-        printf("\n");
-    }
-	printf("\nExamples:\n"
-	"  %s -s 10 myfile.txt      Start at line 10 from file\n"
-	"  %s -s -3 -               Start 3 lines from end, read from stdin\n"
-	"  %s                       Read from clipboard, start at line 1\n", 
-	progname, progname, progname);
+	return 0;
 }
