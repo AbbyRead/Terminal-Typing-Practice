@@ -80,12 +80,23 @@ int parse_options(int argc, const char * const *argv) {
 			fprintf(stderr, "Unknown option: -%c\n", optopt);
 			return EXIT_FAILURE;
 		}
-		if (optind >= argc) break;
 	}
-	
-	printf("Starting line: %d\n", line);
+	if (optind >= argc) {
+		ingest_mode = CLIPBOARD;
+	} else if (strcmp(argv[optind], "-") == 0) {
+		ingest_mode = STDIN;
+	} else {
+		ingest_mode = FILE;
+	}
 
-	return 0;
+	printf("Starting line: %d\n", line);
+	switch (ingest_mode) {
+		case CLIPBOARD:	puts("Ingest from clipboard");	break;
+		case STDIN:		puts("Ingest from stdin");		break;
+		case FILE:		puts("Ingest from file");		break;
+		default:		puts("Unknown ingest mode");	break;
+	}
+	return EXIT_SUCCESS;
 }
 
 static void print_usage(const char *progname) {
