@@ -20,11 +20,15 @@ struct option {
 
 */
 
+enum IngestMode ingest_mode = UNKNOWN;
+
 static struct usage_wrap {
 	struct option opt;
 	const char *arg;
 	const char *desc;
 }
+
+extern enum IngestMode ingest_mode;
 
 static enum { HELP, START, VERSION, OPT_COUNT };
 

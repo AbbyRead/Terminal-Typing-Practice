@@ -9,64 +9,74 @@
 #include "platform.h"
 #include "options.h"
 
-#define isatty _isatty
-
-static size_t buffer_size = 4096;
-static size_t total_read = 0;
 enum Platform platform = WINDOWS;
 
-char *platform_read_stdin(void) {
-	if (!_isatty(fileno(stdin))) {
-		FILE *source = stdin;
-	} else {
-		exit(EXIT_FAILURE);
-	}
-
-	char *buffer = malloc(size_needed);
-	if (!buffer) {
-		GlobalUnlock(hData);
-		CloseClipboard();
-		return NULL;
-	}
-}
-
-char *platform_get_clipboard(void) {
+char *platform_read_clipboard(void) {
 	if (!OpenClipboard(NULL)) {
 		return NULL;
 	}
-
 	HANDLE hData = GetClipboardData(CF_UNICODETEXT);
 	if (!hData) {
 		CloseClipboard();
 		return NULL;
 	}
-
 	LPCWSTR wtext = (LPCWSTR)GlobalLock(hData);
 	if (!wtext) {
 		CloseClipboard();
 		return NULL;
 	}
-
 	// Convert from wide char to UTF-8
-	int size_needed = WideCharToMultiByte(CP_UTF8, 0, wtext, -1, NULL, 0, NULL, NULL);
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, wtext, -1, NULL, 0, NULL, NULL) + 1;
 	if (size_needed <= 0) {
 		GlobalUnlock(hData);
 		CloseClipboard();
 		return NULL;
 	}
-
 	char *buffer = malloc(size_needed);
 	if (!buffer) {
 		GlobalUnlock(hData);
 		CloseClipboard();
 		return NULL;
 	}
-
 	WideCharToMultiByte(CP_UTF8, 0, wtext, -1, buffer, size_needed, NULL, NULL);
-
+	buffer[size_needed - 1] = '\0'
 	GlobalUnlock(hData);
 	CloseClipboard();
+	return buffer;
+}
 
+char *platform_read_stdin(void) {
+	if (_isatty(fileno(stdin))) {
+		perror("No piped or redirected input detected");
+		exit(EXIT_FAILURE);
+	}
+	FILE *fifo = fopen(stdin, "rb");
+	if (!fifo) {
+		perror("Unable to assign stdin");
+		exit(EXIT_FAILURE);
+	}
+	char *buffer = buffer_copy(fifo);
+	if (!buffer) {
+		perror("Failed to create buffer");
+		exit(EXIT_FAILURE);
+	}
+	fifo = NULL;
+	return buffer;
+}
+
+char *platform_read_file(char *file_arg) {
+	FILE *file = fopen(file_arg, "rb");
+	if (!file) {
+		perror("Unable to open file");
+		exit(EXIT_FAILURE);
+	}
+	char *buffer = buffer_copy(file);
+	if (!buffer) {
+		perror("Failed to create buffer");
+		fclose(file);
+		exit(EXIT_FAILURE);
+	}
+	fclose(file);
 	return buffer;
 }
 
