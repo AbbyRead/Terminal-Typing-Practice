@@ -8,46 +8,71 @@
 
 #define INITIAL_SIZE 4096
 
-static size_t size = INITIAL_SIZE;
-static size_t i = 0;
-static char *buffer = NULL;
-
-static void enlarge_buffer(void) {
-	size *= 2;
-	char *new_buffer = realloc(buffer, size);
-	if (!new_buffer) {
-		free(buffer);
-		perror("Failed to enlarge buffer");
-		exit(EXIT_FAILURE);
-	}
-	buffer = new_buffer;
-}
-
-char *buffer_copy(FILE *stream) {
-	buffer = malloc(size);
-	if (!buffer) {
-		perror("Failed to allocate buffer");
-		return NULL;
-	}
+input_buffer_t *buffer_from_stream(FILE *stream) {
+	size_t size = INITIAL_SIZE, i = 0;
+	char *buffer = malloc(size);
+	if (!buffer) return NULL;
 
 	int c;
 	while ((c = fgetc(stream)) != EOF) {
-		if ((i + 1) >= size) {
-			assert((i + 1) == size);
-			enlarge_buffer();
+		if (i + 1 >= size) {
+			size *= 2;
+			char *new_buf = realloc(buffer, size);
+			if (!new_buf) { free(buffer); return NULL; }
+			buffer = new_buf;
 		}
 		buffer[i++] = (char)c;
 	}
+	buffer[i] = '\0';
 
-	if (ferror(stream)) {
-		free(buffer);
-		buffer = NULL;
-		i = 0;
-		return NULL;
+	input_buffer_t *result = malloc(sizeof(input_buffer_t));
+	result->data = buffer;
+	result->length = i;
+	return result;
+}
+
+line_array_t *tokenize_lines(const input_buffer_t *buffer) {
+	if (!buffer || !buffer->data) return NULL;
+
+	char *copy = strdup(buffer->data);
+	size_t capacity = 0, count = 0;
+	char **lines = NULL;
+	char *start = copy, *newline;
+
+	while ((newline = strchr(start, '\n'))) {
+		*newline = '\0';
+		if (count == capacity) {
+			capacity = capacity ? capacity * 2 : 8;
+			lines = realloc(lines, capacity *sizeof(char *));
+		}
+		lines[count++] = start;
+		start = newline + 1;
 	}
 
-	buffer[i] = '\0';
-	return buffer;
+	// final line
+	lines = realloc(lines, (count + 2) * sizeof(char *));
+	lines[count++] = start;
+	lines[count] = NULL;
+
+	line_array_t *arr = malloc(sizeof(line_array_t));
+	arr->lines = lines;
+	arr->count = count;
+	return arr;
+}
+
+void free_input_buffer(input_buffer_t *buf) {
+	if (buf) {
+		free(buf->data);
+		free(buf);
+	}
+}
+
+void free_line_array(line_array_t *arr) {
+	if (arr) {
+		free(arr->lines[0]);  // original strdup'ed buffer
+		free(arr->lines);
+		free(arr);
+	}
 }
 
 char **buffer_tokenize_lines(char *full_buffer) {

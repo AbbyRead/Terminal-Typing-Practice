@@ -9,57 +9,34 @@
 enum Platform platform = MACOS;
 
 void platform_initialize(void) {
-	setenv("MallocNanoZone", "0", 1);
+	// setenv("MallocNanoZone", "0", 1);
 	setlocale(LC_CTYPE, "");
 }
 
-char *platform_read_clipboard(void) {
+input_buffer_t *platform_read_clipboard(void) {
 	FILE *clipboard = popen("pbpaste", "rb");
-	if (!clipboard) {
-		perror("Could not open clipboard");
-		exit(EXIT_FAILURE);
-	}
-	char *buffer = buffer_copy(clipboard);
-	if (!buffer) {
-		perror("Failed to create buffer");
-		pclose(clipboard);
-		exit(EXIT_FAILURE);
-	}
+	if (!clipboard) return NULL;
+	input_buffer_t *buffer = buffer_from_stream(clipboard);
 	pclose(clipboard);
 	return buffer;
 }
 
-char *platform_read_stdin(void) {
+input_buffer_t *platform_read_stdin(void) {
 	if (isatty(fileno(stdin))) {
 		perror("No piped or redirected input detected");
 		exit(EXIT_FAILURE);
 	}
 	FILE *fifo = stdin;
-	if (!fifo) {
-		perror("Unable to assign stdin");
-		exit(EXIT_FAILURE);
-	}
-	char *buffer = buffer_copy(fifo);
-	if (!buffer) {
-		perror("Failed to create buffer");
-		exit(EXIT_FAILURE);
-	}
+	if (!fifo) return NULL;
+	input_buffer_t *buffer = buffer_from_stream(fifo);
 	fifo = NULL;
 	return buffer;
 }
 
-char *platform_read_file(char *file_arg) {
-	FILE *file = fopen(file_arg, "rb");
-	if (!file) {
-		perror("Unable to open file");
-		exit(EXIT_FAILURE);
-	}
-	char *buffer = buffer_copy(file);
-	if (!buffer) {
-		perror("Failed to create buffer");
-		fclose(file);
-		exit(EXIT_FAILURE);
-	}
+input_buffer_t *platform_read_file(const char *filename) {
+	FILE *file = fopen(filename, "rb");
+	if (!file) return NULL;
+	input_buffer_t *buffer = buffer_from_stream(file);
 	fclose(file);
 	return buffer;
 }

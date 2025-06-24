@@ -5,20 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "buffer.h"
 #include "options.h"
 #include "version.h"
 
-enum IngestMode ingest_mode = UNKNOWN;
+enum CommandLineOptions {
+    HELP,
+    START,
+    VERSION,
+    OPT_COUNT
+};
 
-static enum { HELP, START, VERSION, OPT_COUNT };
-
-static struct usage_wrap {
+typedef struct {
 	struct option opt; // struct "option" as defined in getopt.h
 	const char *arg;   // optional/required option argument name
 	const char *desc;  // help text for this particular option
-};
+} usage_wrap_t;
 
-static struct usage_wrap opt_usage[OPT_COUNT + 1] = {
+static usage_wrap_t opt_usage[OPT_COUNT + 1] = {
 	[HELP] = {
 		.opt = { 
 			.name = "help", 
@@ -104,50 +108,32 @@ void print_usage(const char *progname) {
 	progname, progname, progname);
 }
 
-int parse_options(int argc, char **argv) {
-	int option;
-	int line = 1;
-	//opterr = 0;
-	while (1) {
-		option = getopt_long(argc, argv, "hs:v", long_opts, NULL);
+int parse_options(int argc, char **argv, invocation_t *invo) {
+	int option;  // cli option character value
+	invo->start_line = 1;
+	invo->filename = NULL;
+	invo->mode = UNKNOWN;
+	
+	while ((option = getopt_long(argc, argv, "hs:v", long_opts, NULL)) != -1) {
 		switch(option) {
 		case 'h':  // print help text
 			print_usage(argv[0]);
 			exit(EXIT_SUCCESS);
-			break;
 		case 's':  // validate starting line number
-			if (!optarg) {
-				fprintf(stderr, "Option -%c requires an argument.\n", option);
-				exit(EXIT_FAILURE);
-			} 
-			else
-			if ( !(line = atoi(optarg)) ) {
-				fprintf(stderr, "Invalid starting line number: %s\n", optarg);
-				exit(EXIT_FAILURE);
-			}
+			invo->start_line = atoi(optarg);
 			break;
 		case 'v':  // print version number
 			printf("TypeBelow: Version %s\n", PROGRAM_VERSION);
 			exit(EXIT_SUCCESS);
-		default:
-			fprintf(stderr, "Unknown option: -%c\n", optopt);
-			return EXIT_FAILURE;
 		}
 	}
-	if (optind >= argc) {
-		ingest_mode = CLIPBOARD;
+	if (optind >= argc) { // handle non-option arguments
+		invo->mode = CLIPBOARD;
 	} else if (strcmp(argv[optind], "-") == 0) {
-		ingest_mode = STDIN;
+		invo->mode = STDIN;
 	} else {
-		ingest_mode = FILE_PTR;
-	}
-
-	printf("Starting line: %d\n", line);
-	switch (ingest_mode) {
-		case CLIPBOARD:	puts("Ingest from clipboard");	break;
-		case STDIN:		puts("Ingest from stdin");		break;
-		case FILE_PTR:	puts("Ingest from file");		break;
-		default:		puts("Unknown ingest mode");	break;
+		invo->mode = FILE_PTR;
+		invo->filename = argv[optind];
 	}
 	return 0;
 }

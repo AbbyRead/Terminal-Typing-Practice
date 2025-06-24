@@ -1,13 +1,19 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-enum IngestMode {
+typedef enum {
     UNKNOWN,
     CLIPBOARD,
     STDIN,
     FILE_PTR
-};
+} ingest_mode_t;
 
-int parse_options(int argc, char **argv);
+typedef struct {
+	ingest_mode_t mode;
+	const char *filename;
+	int start_line;
+} invocation_t;
+
+int parse_options(int argc, char **argv, invocation_t *invo);
 
 #endif
