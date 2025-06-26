@@ -36,26 +36,26 @@ line_array_t *tokenize_lines(const text_buffer_t *buffer) {
 
 	char *copy = strdup(buffer->data);
 	size_t capacity = 0, count = 0;
-	char **lines = NULL;
+	char **line_array = NULL;
 	char *start = copy, *newline;
 
 	while ((newline = strchr(start, '\n'))) {
 		*newline = '\0';
 		if (count == capacity) {
 			capacity = capacity ? capacity * 2 : 8;
-			lines = realloc(lines, capacity *sizeof(char *));
+			line_array = realloc(line_array, capacity *sizeof(char *));
 		}
-		lines[count++] = start;
+		line_array[count++] = start;
 		start = newline + 1;
 	}
 
 	// final line
-	lines = realloc(lines, (count + 2) * sizeof(char *));
-	lines[count++] = start;
-	lines[count] = NULL;
+	line_array = realloc(line_array, (count + 2) * sizeof(char *));
+	line_array[count++] = start;
+	line_array[count] = NULL;
 
 	line_array_t *arr = malloc(sizeof(line_array_t));
-	arr->lines = lines;
+	arr->line = line_array;
 	arr->count = count;
 	return arr;
 }
@@ -69,8 +69,8 @@ void free_input_buffer(text_buffer_t *buf) {
 
 void free_line_array(line_array_t *arr) {
 	if (arr) {
-		free(arr->lines[0]);  // original strdup'ed buffer
-		free(arr->lines);
+		free(arr->line[0]);  // original strdup'ed buffer
+		free(arr->line);
 		free(arr);
 	}
 }
@@ -86,7 +86,7 @@ char **buffer_tokenize_lines(char *full_buffer) {
 		exit(EXIT_FAILURE);
 	}
 
-	char **lines = NULL;
+	char **line_array = NULL;
 	size_t count = 0, capacity = 0;
 	char *start = buffer_copy;
 	char *newline;
@@ -98,19 +98,19 @@ char **buffer_tokenize_lines(char *full_buffer) {
 		if (count == capacity) {  // both start at 0
 			// start capacity at 8 really, and double when count matches it
 			size_t new_capacity = capacity == 0 ? 8 : capacity * 2;
-			char **temp = realloc(lines, new_capacity * sizeof(char *));
+			char **temp = realloc(line_array, new_capacity * sizeof(char *));
 			if (!temp) {
-				perror("Failed to grow lines array");
+				perror("Failed to grow line_array");
 				free(buffer_copy);
-				free(lines);
+				free(line_array);
 				exit(EXIT_FAILURE);
 			}
-			lines = temp;
+			line_array = temp;
 			capacity = new_capacity;
 		}
 
 		// Store line pointer (empty or not)
-		lines[count++] = start;
+		line_array[count++] = start;
 
 		start = newline + 1;
 	}
@@ -118,31 +118,31 @@ char **buffer_tokenize_lines(char *full_buffer) {
 	// Last line (maybe empty)
 	if (count == capacity) {
 		size_t new_capacity = capacity == 0 ? 8 : capacity * 2;
-		char **temp = realloc(lines, new_capacity * sizeof(char *));
+		char **temp = realloc(line_array, new_capacity * sizeof(char *));
 		if (!temp) {
-			perror("Failed to grow lines array for the last actual line");
+			perror("Failed to grow line_array for the last actual line");
 			free(buffer_copy);
-			free(lines);
+			free(line_array);
 			exit(EXIT_FAILURE);
 		}
-		lines = temp;
+		line_array = temp;
 		capacity = new_capacity;
 	}
-	lines[count++] = start;
+	line_array[count++] = start;
 
 	// Null terminate array
 	if (count == capacity) {
-		char **temp = realloc(lines, (capacity + 1) * sizeof(char *));
+		char **temp = realloc(line_array, (capacity + 1) * sizeof(char *));
 		if (!temp) {
-			perror("Failed to grow lines array for terminator");
+			perror("Failed to grow line_array for terminator");
 			free(buffer_copy);
-			free(lines);
+			free(line_array);
 			exit(EXIT_FAILURE);
 		}
-		lines = temp;
+		line_array = temp;
 		capacity++;
 	}
-	lines[count] = NULL;
-	// buffer_copy NOT freed here because the lines array points to parts of it
-	return lines;
+	line_array[count] = NULL;
+	// buffer_copy NOT freed here because the line_array points to parts of it
+	return line_array;
 }

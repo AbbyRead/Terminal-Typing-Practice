@@ -11,7 +11,7 @@ typedef struct {
 
 typedef struct {
 	size_t count;
-	char **lines;
+	char **line;
 } line_array_t;
 
 text_buffer_t *buffer_from_stream(FILE *stream);

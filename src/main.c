@@ -22,12 +22,12 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 	}
 
-	line_array_t *lines = tokenize_lines(buffer);
-	for (size_t i = invo.start_line - 1; i < lines->count; ++i) {
-		typing_prompt(lines->lines[i]);
+	line_array_t *array = tokenize_lines(buffer);
+	for (size_t i = invo.start_line - 1; i < array->count; ++i) {
+		typing_prompt(array->line[i]);
 	}
 
-	free_line_array(lines);
+	free_line_array(array);
 	free_input_buffer(buffer);
 	return EXIT_SUCCESS;
 }
