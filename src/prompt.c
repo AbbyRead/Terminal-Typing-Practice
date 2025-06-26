@@ -3,16 +3,21 @@
 #include "buffers.h"
 #include "platform.h"
 
-static char temp_input[LINE_MAX];
+static char max_input[LINE_MAX];
 
-int prompt_user(line_array_t *array) {
-	for (size_t i = 0; i < array->count; ++i) {
-		printf("%s\n", array->line[i]);
-		read_line(temp_input);
+line_array_t *prompt_user(const line_array_t *prompt) {
+
+	// create a line_array_t with its text_buffer_t for user input
+
+	for (size_t i = 0; i < prompt->count; ++i) {
+		printf("%s\n", prompt->line[i]);
+		read_line(max_input);
+		append_line()
 	}
+	return users_lines;
 }
 
-int read_line(char *buffer) {
+static int read_line(char *buffer) {
 	if (fgets(buffer, LINE_MAX, stdin) == NULL) {
 		return -1;
 	}

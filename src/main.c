@@ -13,7 +13,8 @@ int main(int argc, char *argv[]) {
 	parse_options(argc, argv, &invo);
 
 	text_buffer_t *copy_of_source = NULL;
-	line_array_t  *array_of_lines = NULL;
+	line_array_t  *prompt_lines   = NULL;
+	line_array_t  *users_lines    = NULL;
 
 	switch (invocation.mode) {
 		case CLIPBOARD: copy_of_source = platform_read_clipboard(); break;
@@ -23,11 +24,11 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Somehow failed to determine source text type.\n"); 
 			exit(EXIT_FAILURE);
 	}
-	array_of_lines = tokenize_lines(copy_of_source);
+	// These allocate memory that should be freed elsewhere later
+	prompt_lines = tokenize_lines(copy_of_source);
+	users_lines = prompt_user(prompt_lines);
 
-	prompt_user(array_of_lines);
-
-	free_line_array(array_of_lines);
-	free_input_buffer(copy_of_source);
+	prompt_lines = free_line_array(prompt_lines);
+	users_lines = free_line_array(users_lines);
 	return EXIT_SUCCESS;
 }
