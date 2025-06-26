@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "buffer.h"
+#include "buffers.h"
 #include "options.h"
 #include "version.h"
 

@@ -6,8 +6,11 @@
 #include <conio.h>
 #include <windows.h>
 #include <string.h>
+
 #include "platform.h"
 #include "options.h"
+
+#define LINE_MAX 8191
 
 enum Platform platform = WINDOWS;
 
@@ -59,7 +62,7 @@ char *platform_read_stdin(void) {
 		perror("Unable to assign stdin");
 		exit(EXIT_FAILURE);
 	}
-	char *buffer = buffer_copy(fifo);
+	char *buffer = buffer_from_stream(fifo);
 	if (!buffer) {
 		perror("Failed to create buffer");
 		exit(EXIT_FAILURE);
@@ -74,7 +77,7 @@ char *platform_read_file(char *file_arg) {
 		perror("Unable to open file");
 		exit(EXIT_FAILURE);
 	}
-	char *buffer = buffer_copy(file);
+	char *buffer = buffer_from_stream(file);
 	if (!buffer) {
 		perror("Failed to create buffer");
 		fclose(file);

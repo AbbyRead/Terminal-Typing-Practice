@@ -4,11 +4,11 @@
 #include <string.h>
 #include <limits.h>
 
-#include "buffer.h"
+#include "buffers.h"
 
 #define INITIAL_SIZE 4096
 
-input_buffer_t *buffer_from_stream(FILE *stream) {
+text_buffer_t *buffer_from_stream(FILE *stream) {
 	size_t size = INITIAL_SIZE, i = 0;
 	char *buffer = malloc(size);
 	if (!buffer) return NULL;
@@ -25,13 +25,13 @@ input_buffer_t *buffer_from_stream(FILE *stream) {
 	}
 	buffer[i] = '\0';
 
-	input_buffer_t *result = malloc(sizeof(input_buffer_t));
+	text_buffer_t *result = malloc(sizeof(text_buffer_t));
 	result->data = buffer;
 	result->length = i;
 	return result;
 }
 
-line_array_t *tokenize_lines(const input_buffer_t *buffer) {
+line_array_t *tokenize_lines(const text_buffer_t *buffer) {
 	if (!buffer || !buffer->data) return NULL;
 
 	char *copy = strdup(buffer->data);
@@ -60,7 +60,7 @@ line_array_t *tokenize_lines(const input_buffer_t *buffer) {
 	return arr;
 }
 
-void free_input_buffer(input_buffer_t *buf) {
+void free_input_buffer(text_buffer_t *buf) {
 	if (buf) {
 		free(buf->data);
 		free(buf);
