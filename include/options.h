@@ -2,10 +2,10 @@
 #define OPTIONS_H
 
 typedef enum {
-    UNKNOWN,
-    CLIPBOARD,
-    STDIN,
-    FILE_PTR
+	UNKNOWN,
+	CLIPBOARD,
+	STDIN,
+	FILE_PTR
 } ingest_mode_t;
 
 typedef struct {

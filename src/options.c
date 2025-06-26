@@ -10,10 +10,10 @@
 #include "version.h"
 
 enum CommandLineOptions {
-    HELP,
-    START,
-    VERSION,
-    OPT_COUNT
+	HELP,
+	START,
+	VERSION,
+	OPT_COUNT
 };
 
 typedef struct {
