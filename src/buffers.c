@@ -55,7 +55,7 @@ void expand_text_buffer(text_buffer_t *buffer) {
 	buffer->size = new_size;
 }
 
-void increase_slots(line_array_t line_array) {
+void increase_slots(line_array_t *line_array) {
 	size_t new_amount = line_array->slots * 2;
 	char **new_mem = NULL;
 	new_mem = realloc(line_array->line, new_amount);
@@ -69,14 +69,14 @@ void increase_slots(line_array_t line_array) {
 
 void append_line(line_array_t *line_array, char *new_line, size_t incoming_length) {
 	if (line_array->slots == line_array->filled) increase_slots(line_array);
-	if (line_array->pool->index + incoming_length + 1 > line_array->pool->size) {
-		expand_text_buffer(line_array->pool);
-	}
-	size_t i = ++line_array->filled;
+	size_t i = line_array->filled;
 	if (line_array->pool->size < line_array->pool->index + incoming_length + 1) {
 		expand_text_buffer(line_array->pool);
 	}
+	size_t data_i = line_array->pool->index;
+	line_array->line[i] = &line_array->pool->data[data_i];
 	line_array->line[i] = strncpy(line_array->line[i], new_line, incoming_length);
+	line_array->filled++;
 	line_array->pool->index += incoming_length + 1; // move data pointer past written
 }
 
