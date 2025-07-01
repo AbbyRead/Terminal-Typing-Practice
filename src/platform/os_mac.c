@@ -6,8 +6,6 @@
 #include "platform.h"
 #include "buffers.h"
 
-#define STRING_MAX 2048
-
 enum Platform platform = MACOS;
 
 void platform_initialize(void) {

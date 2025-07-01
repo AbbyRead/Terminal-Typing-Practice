@@ -10,8 +10,6 @@
 #include "platform.h"
 #include "options.h"
 
-#define STRING_MAX 8191
-
 enum Platform platform = WINDOWS;
 
 void platform_initialize(void) {

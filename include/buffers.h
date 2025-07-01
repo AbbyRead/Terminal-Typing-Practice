@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#define STRING_MAX 2048
+
 typedef struct {
 	size_t size;  // allocated size
 	size_t index; // start of next write
