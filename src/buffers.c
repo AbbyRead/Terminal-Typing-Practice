@@ -25,20 +25,22 @@ text_buffer_t *create_text_buffer(void) {
 	char *data = malloc(INITIAL_SIZE);
 	if (!data) return NULL;
 	text_buffer_t *buffer = malloc(sizeof(text_buffer_t));
-	buffer.size = INITIAL_SIZE;
-	buffer.data = data;
+	buffer->size = INITIAL_SIZE;
+	buffer->data = data;
 	return buffer;
 }
 
 line_array_t *create_line_array(void) {
-	line_array_t *thingy = {0, NULL, {0}};
-	thingy = malloc(sizeof(line_array_t));
+	line_array_t *thingy = malloc(sizeof(line_array_t));
+	if (!thingy) return NULL;
+	thingy->count = 0;
+	thingy->line = NULL;
 	thingy->pool = create_text_buffer();
 	return thingy;
 }
 
 int expand_text_buffer(text_buffer_t *buffer) {
-	size_t new_size = buffer->size * 2
+	size_t new_size = buffer->size * 2;
 	char *expanded_pool = realloc(buffer->data, new_size);
 	if (!expanded_pool) {
 		perror("Failed to increase text buffer size");
@@ -95,13 +97,22 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 	// Tokenizing modifies the content by replacing character(s) with '\0' delimiters; 
 	//  so make a copy and tokenize that instead of the uninterrupted source text copy
 	char *copy_to_delimit = strdup(contiguous_buffer->data);
-	text_buffer_t *pool = {
-		.size = strlen(copy_to_delimit),
-		.data = copy_to_delimit };
-	line_array_t sections_array = {
-		.count = 0, 
-		.line = NULL, 
-		.pool = *pool };
+	
+	line_array_t *sections_array = malloc(sizeof(line_array_t));
+	if (!sections_array) {
+		perror("Failed to allocate line array");
+		exit(EXIT_FAILURE);
+	}
+	sections_array->count = 0;
+	sections_array->line = NULL;
+
+	text_buffer_t *pool = malloc(sizeof(text_buffer_t));
+	if (!pool) {
+		perror("Failed to allocate text buffer pool");
+		exit(EXIT_FAILURE);
+	}
+	pool->size = INITIAL_SIZE;
+
 	char *section = copy_to_delimit;
 	char *found_newline;
 
