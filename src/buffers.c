@@ -103,7 +103,8 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 	char *start = contiguous_buffer->data;
 	char *nl = strchr(start, '\n');
 	while (nl) {
-		size_t length = (size_t)((nl - start) / sizeof(char));
+		ptrdiff_t diff = nl - start;
+		size_t length = (size_t)diff;
 		append_line(line_array, start, length);
 		start = nl + 1; // increment for next iteration
 		nl = strchr(start, '\n'); // Look for the next newline character
