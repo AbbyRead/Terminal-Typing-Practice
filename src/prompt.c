@@ -17,20 +17,24 @@ typedef struct {
 */
 
 line_array_t *prompt_user(const line_array_t *prompt) {
-	char max_input[STRING_MAX] = NULL; // one line of user input
+	char max_input[STRING_MAX] = {0}; // one line of user input
 
 	line_array_t *user_lines; = create_line_array();
+	size_t pool_index = 0;
 
 	for (size_t i = 0; i < prompt->count; ++i) {
+		size_t available = user_lines->pool->size - pool_index;
 		printf("%s\n", prompt->line[i]);
-		user_lines->line[i] = 
+		read_line(max_input); // into max_input, and assign new index
+		append_line(user_lines, max_input, &pool_index); // check space and append
 	}
+
 	return user_lines;
 }
 
 // Read user text from stdin into max_input string
-static int read_line(void) {
+static int read_line(char *line_storage) {
 	// NOTE: fgets already puts in a terminating NUL
-	max_input = fgets(buffer, STRING_MAX, stdin);
-	return max_input; // returns NULL on failure
+	line_storage = fgets(line_storage, STRING_MAX, stdin);
+	return strlen(line_storage) + 2; // returns next line's starting index
 }

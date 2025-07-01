@@ -30,7 +30,7 @@ text_buffer_t *create_text_buffer(void) {
 	return buffer;
 }
 
-line_array_t *create_line_array() {
+line_array_t *create_line_array(void) {
 	line_array_t *thingy = {0, NULL, {0}};
 	thingy = malloc(sizeof(line_array_t));
 	thingy->pool = create_text_buffer();
@@ -47,6 +47,21 @@ int expand_text_buffer(text_buffer_t *buffer) {
 	buffer->data = expanded_pool;
 	buffer->size = new_size;
 	return EXIT_SUCCESS;
+}
+
+int append_line(line_array_t *line_array, char *new_line, size_t *pool_index) {
+	// pool_index is the current spot to put a new line
+
+	size_t char_amount = strlen(new_line);
+	if (line_array->pool->size < pool_index + char_amount + 1) {
+		expand_text_buffer(line_array->pool);
+	}
+
+	strncat(line_array[count], new_line, char_amount)
+	line_array->count += 1;
+
+	// move string pointer along pool
+	// change pool_index to be the new location to put the next line
 }
 
 text_buffer_t *buffer_from_stream(FILE *stream) {
