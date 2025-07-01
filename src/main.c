@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 		perror("Failed to tokenize lines from source text");
 		exit(EXIT_FAILURE);
 	}
-	users_lines = prompt_user(prompt_lines);
+	users_lines = prompt_user(prompt_lines, invocation.start_line);
 	if (!users_lines) {
 		fprintf(stderr, "Prompting failed or returned no user input.\n");
 		return EXIT_FAILURE;

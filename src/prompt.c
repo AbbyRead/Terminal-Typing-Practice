@@ -30,7 +30,7 @@ static size_t read_line(char *line_storage) {
 	return strlen(line_storage);
 }
 
-line_array_t *prompt_user(const line_array_t *prompt) {
+line_array_t *prompt_user(const line_array_t *prompt, size_t start_line) {
 	char input_line[MAX_LINE_LEN]; // buffer for one line of user input
 
 	line_array_t *user_lines = create_line_array();
@@ -39,7 +39,12 @@ line_array_t *prompt_user(const line_array_t *prompt) {
 		exit(EXIT_FAILURE);
 	}
 
-	for (size_t i = 0; i < prompt->filled; ++i) {
+	if (start_line < 1 || start_line > prompt->filled) {
+		fprintf(stderr, "Starting line %zu is out of bounds (1 - %zu)\n", start_line, prompt->filled);
+		return NULL;
+	}
+
+	for (size_t i = start_line - 1; i < prompt->filled; ++i) {
 		printf("%s\n", prompt->line[i]);
 		size_t input_length = read_line(input_line);
 		if (input_length == 0 && feof(stdin)) {
