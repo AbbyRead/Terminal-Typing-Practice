@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "buffers.h"
 #include "platform.h"
+#include "prompt.h"
 
 /*
 typedef struct {
@@ -17,6 +20,13 @@ typedef struct {
 	text_buffer_t *pool; // the text_buffer_t this wraps
 } line_array_t;
 */
+
+// Read user text from stdin into max_input string
+static int read_line(char *line_storage) {
+	// NOTE: fgets already puts in a terminating NUL
+	line_storage = fgets(line_storage, STRING_MAX, stdin);
+	return strlen(line_storage) + 2; // returns next line's starting index
+}
 
 line_array_t *prompt_user(const line_array_t *prompt) {
 	char max_input[STRING_MAX] = {0}; // one line of user input
@@ -36,11 +46,4 @@ line_array_t *prompt_user(const line_array_t *prompt) {
 	}
 
 	return user_lines;
-}
-
-// Read user text from stdin into max_input string
-static int read_line(char *line_storage) {
-	// NOTE: fgets already puts in a terminating NUL
-	line_storage = fgets(line_storage, STRING_MAX, stdin);
-	return strlen(line_storage) + 2; // returns next line's starting index
 }

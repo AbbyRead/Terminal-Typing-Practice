@@ -34,7 +34,7 @@ text_buffer_t *create_text_buffer(void) {
 	return buffer;
 }
 
-line_array_t *create_line_array() {
+line_array_t *create_line_array(void) {
 	line_array_t *array = malloc(sizeof(line_array_t));
 	if (!array) return NULL;
 	array->slots	= STARTING_SLOTS;
@@ -100,10 +100,10 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 	line_array_t *line_array = create_line_array();
 	if (!line_array) return NULL;
 
-	const char *start = contiguous_buffer->data;
-	const char *nl = strchr(start, '\n');
+	char *start = contiguous_buffer->data;
+	char *nl = strchr(start, '\n');
 	while (nl) {
-		size_t length = (nl - start) / sizeof(char);
+		size_t length = (size_t)((nl - start) / sizeof(char));
 		append_line(line_array, start, length);
 		start = nl + 1; // increment for next iteration
 		nl = strchr(start, '\n'); // Look for the next newline character
@@ -112,13 +112,11 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 }
 
 /* CLEANUP ROUTINES */
-void *free_text_buffer(text_buffer_t *buffer) {
+void free_text_buffer(text_buffer_t *buffer) {
 	free(buffer->data);
 	free(buffer);
-	return NULL;
 }
-void *free_line_array(line_array_t *line_array) {
+void free_line_array(line_array_t *line_array) {
 	free_text_buffer(line_array->pool);
 	free(line_array);
-	return NULL;
 }
