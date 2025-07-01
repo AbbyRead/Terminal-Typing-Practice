@@ -23,24 +23,29 @@ typedef struct {
 
 // Read user text from stdin into max_input string
 static size_t read_line(char *line_storage) {
-	line_storage = fgets(line_storage, STRING_MAX, stdin);
-	return strlen(line_storage) + 2;
+	if (!fgets(line_storage, MAX_LINE_LEN, stdin)) {
+		return 0; // EOF or error
+	}
+	
+	return strlen(line_storage);
 }
 
 line_array_t *prompt_user(const line_array_t *prompt) {
-	char max_input[STRING_MAX] = {0}; // one line of user input
+	char input_line[MAX_LINE_LEN]; // buffer for one line of user input
 
 	line_array_t *user_lines = create_line_array();
 	if (!user_lines) {
 		perror("Failed to create line array");
 		exit(EXIT_FAILURE);
 	}
-	size_t pool_index = 0;
 
 	for (size_t i = 0; i < prompt->filled; ++i) {
 		printf("%s\n", prompt->line[i]);
-		read_line(max_input); // into max_input, and assign new index
-		append_line(user_lines, max_input, pool_index); // check space and append
+		size_t input_length = read_line(input_line);
+		if (input_length == 0 && feof(stdin)) {
+			break; // Only break on real EOF
+		}
+		append_line(user_lines, input_line, input_length); // check space and append
 	}
 
 	return user_lines;

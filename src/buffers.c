@@ -117,6 +117,10 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 		start = nl + 1; // increment for next iteration
 		nl = strchr(start, '\n'); // Look for the next newline character
 	}
+	// get last line if not ending in a newline
+	if (*start != '\0') {
+ 		append_line(line_array, start, strlen(start));
+	}
 	return line_array;
 }
 

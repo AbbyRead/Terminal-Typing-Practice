@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define STRING_MAX 2048
+#define MAX_LINE_LEN 2048
 
 typedef struct {
 	size_t size;  // allocated size
