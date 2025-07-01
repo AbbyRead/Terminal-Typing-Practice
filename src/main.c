@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "buffers.h"
 #include "options.h"
 #include "platform.h"
-#include "buffers.h"
+#include "prompt.h"
 #include "version.h"
 
 int main(int argc, char *argv[]) {
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 	users_lines = prompt_user(prompt_lines);
 
 	// Free memory used at the end of program
-	prompt_lines = free_line_array(prompt_lines);
-	users_lines = free_line_array(users_lines);
+	free_line_array(prompt_lines);
+	free_line_array(users_lines);
 	return EXIT_SUCCESS;
 }
