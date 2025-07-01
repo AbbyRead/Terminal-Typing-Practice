@@ -14,7 +14,7 @@ INCLUDE_DIR   := include
 CC          ?= clang
 CPPFLAGS    := -I$(INCLUDE_DIR)
 CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic
-CFLAGS      += -g -O2
+CFLAGS      += -g -O0
 CFLAGS      += -Wshadow -Wconversion -Wsign-conversion
 CFLAGS      += -Wfloat-equal -Wstrict-prototypes -Wundef -Wredundant-decls
 CFLAGS      += -fsanitize=address,undefined -fno-omit-frame-pointer
