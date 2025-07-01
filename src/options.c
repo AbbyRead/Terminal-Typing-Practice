@@ -120,7 +120,11 @@ int parse_options(int argc, char **argv, invocation_t *invo) {
 			print_usage(argv[0]);
 			exit(EXIT_SUCCESS);
 		case 's':  // validate starting line number
-			invo->start_line = atoi(optarg);
+			if (atoi(optarg) < 0) {
+				fprintf(stderr, "Starting line must be non-negative.\n");
+				exit(EXIT_FAILURE);
+			}
+			invo->start_line = (size_t)atoi(optarg);
 			break;
 		case 'v':  // print version number
 			printf("TypeBelow: Version %s\n", PROGRAM_VERSION);

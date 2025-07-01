@@ -40,7 +40,15 @@ line_array_t *create_line_array(void) {
 	array->slots	= STARTING_SLOTS;
 	array->filled	= 0;
 	array->line	= malloc(sizeof(char **) * STARTING_SLOTS);
+	if (!array->line) {
+		free(array);
+		return NULL;
+	}
 	array->pool	= create_text_buffer();
+	if (!array->pool) {
+		free(array->line);
+		free(array);
+	}
 	return array;
 }
 

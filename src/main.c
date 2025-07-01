@@ -26,12 +26,16 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 	}
 
-	// These will allocate memory that should be freed later
-	// Tokenize ingest
 	prompt_lines = tokenize_lines(copy_of_source);
-	// Run through it with continual prompts
-	// Supply prompt_lines to function and it returns user_lines
+	if (!prompt_lines) {
+		perror("Failed to tokenize lines from source text");
+		exit(EXIT_FAILURE);
+	}
 	users_lines = prompt_user(prompt_lines);
+	if (!users_lines) {
+		fprintf(stderr, "Prompting failed or returned no user input.\n");
+		return EXIT_FAILURE;
+	}
 
 	// Free memory used at the end of program
 	free_line_array(prompt_lines);
