@@ -80,7 +80,7 @@ void append_line(line_array_t *line_array, char *new_line, size_t incoming_lengt
 	line_array->pool->index += incoming_length + 1; // move data pointer past written
 }
 
-text_buffer_t *buffer_from_stream(FILE *stream) {
+text_buffer_t *read_stream_to_buffer(FILE *stream) {
 	text_buffer_t *buffer = create_text_buffer();
 	if (!buffer) return NULL;
 	int c;

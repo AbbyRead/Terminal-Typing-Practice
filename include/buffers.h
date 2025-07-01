@@ -21,7 +21,7 @@ text_buffer_t *create_text_buffer(void);
 int expand_text_buffer(text_buffer_t *buffer);
 line_array_t *create_line_array(void)
 int append_line(line_array_t *line_array, char *new_line, size_t *pool_index)
-text_buffer_t *buffer_from_stream(FILE *stream);
+text_buffer_t *read_stream_to_buffer(FILE *stream);
 line_array_t *tokenize_lines(const text_buffer_t *buffer);
 void free_text_buffer(text_buffer_t *buf);
 void free_line_array(line_array_t *arr);

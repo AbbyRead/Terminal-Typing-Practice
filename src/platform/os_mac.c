@@ -18,7 +18,7 @@ void platform_initialize(void) {
 text_buffer_t *platform_read_clipboard(void) {
 	FILE *clipboard = popen("pbpaste", "rb");
 	if (!clipboard) return NULL;
-	text_buffer_t *buffer = buffer_from_stream(clipboard);
+	text_buffer_t *buffer = read_stream_to_buffer(clipboard);
 	pclose(clipboard);
 	return buffer;
 }
@@ -33,7 +33,7 @@ text_buffer_t *platform_read_stdin(void) {
 		perror("Unable to access stdin");
 		exit(EXIT_FAILURE);
 	}
-	text_buffer_t *buffer = buffer_from_stream(fifo);
+	text_buffer_t *buffer = read_stream_to_buffer(fifo);
 	if (!buffer) {
 		perror("Failed to copy buffer");
 		exit(EXIT_FAILURE);
@@ -44,7 +44,7 @@ text_buffer_t *platform_read_stdin(void) {
 text_buffer_t *platform_read_file(const char *filename) {
 	FILE *file = fopen(filename, "rb");
 	if (!file) return NULL;
-	text_buffer_t *buffer = buffer_from_stream(file);
+	text_buffer_t *buffer = read_stream_to_buffer(file);
 	fclose(file);
 	return buffer;
 }
