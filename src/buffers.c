@@ -67,7 +67,7 @@ void increase_slots(line_array_t line_array) {
 	line_array->slots = new_amount;
 }
 
-char *append_line(line_array_t *line_array, char *new_line, size_t incoming_length) {
+void append_line(line_array_t *line_array, char *new_line, size_t incoming_length) {
 	if (line_array->slots == line_array->filled) increase_slots(line_array);
 	if (line_array->pool->index + incoming_length + 1 > line_array->pool->size) {
 		expand_text_buffer(line_array->pool);
@@ -105,24 +105,23 @@ text_buffer_t *buffer_from_stream(FILE *stream) {
 }
 
 line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
-	if (!contiguous_buffer || !contiguous_buffer_data) return NULL;
+	if (!contiguous_buffer || !contiguous_buffer->data) return NULL;
 
 	line_array_t *line_array = create_line_array();
 	if (!line_array) return NULL;
 
-	const char *start = contiguous_buffer->pool->data;
-	const char *nl; = strchr(start, '\n');
+	const char *start = contiguous_buffer->data;
+	const char *nl = strchr(start, '\n');
 	while (nl) {
 		size_t length = (nl - start) / sizeof(char);
-		// append_line uses strncpy, so no need to null-terminate
-		start = append_line(line_array, start, length);
+		
+		append_line(line_array, start, length);
 
+		start = nl + 1; // increment for next iteration
+
+		// Look for the next newline character
 		nl = strchr(start, '\n');
 	}
-	
-
-
-
 }
 
 
