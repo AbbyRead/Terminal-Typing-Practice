@@ -182,22 +182,27 @@ clean-windows:
 TEST_DIR       := test
 TEST_SRC       := $(TEST_DIR)/test.c
 TEST_BIN       := $(BIN_DIR)/test
-TEST_PROGRAM   := $(MACOS_BIN_DIR)/arm64
+TEST_FILE      := $(TEST_DIR)/testfile.txt
 
 .PHONY: test
 
-test: $(TEST_BIN) test/testfile.txt
+test: $(TEST_BIN) $(TEST_FILE)
 	@echo "Running test suite..."
-	@TEST_PROGRAM=$(TEST_PROGRAM) $(TEST_BIN)
+	@$(TEST_BIN)
 
 $(TEST_BIN): $(TEST_SRC) | $(BIN_DIR)
 	@echo "Compiling test binary: $@"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
-test/testfile.txt:
+$(TEST_FILE):
 	@mkdir -p $(dir $@)
-	@echo "Line 1" > $@
+	@echo "Line 1" >  $@
 	@echo "Line 2" >> $@
 	@echo "Line 3" >> $@
 	@echo "Line 4" >> $@
 	@echo "Line 5" >> $@
+
+.PHONY: clean-test
+
+clean-test:
+	rm -f $(TEST_BIN) $(TEST_FILE)

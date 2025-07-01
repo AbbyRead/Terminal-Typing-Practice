@@ -1,19 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
 
 #define PROGRAM "bin/macos/arm64"
+#define MAX_CMD_LEN 512
 
 typedef struct {
-    const char *desc;
-    const char *args;
+	const char *desc;
+	const char *args;
+	int expect_exit; // 0 = success expected, 1+ = specific failure code expected
 } test_case_t;
 
-int run_test(const char *args, const char *desc) {
-    char command[256];
-    snprintf(command, sizeof(command), "%s %s", PROGRAM, args);
+int run_test(const char *args, const char *desc, int expect_exit) {
+    char command[512];
+
+    // Treat shell command specially
+    if (strncmp(args, "echo", 4) == 0) {
+        snprintf(command, sizeof(command), "%s", args);
+    } else {
+        snprintf(command, sizeof(command), "%s %s", PROGRAM, args);
+    }
 
     printf("Running test: %s\n> %s\n", desc, command);
-
     int ret = system(command);
 
     if (ret == -1) {
@@ -23,35 +32,38 @@ int run_test(const char *args, const char *desc) {
 
     int exit_code = WEXITSTATUS(ret);
 
-    if (exit_code == 0) {
+    if (exit_code == expect_exit) {
         printf("PASS\n\n");
         return 1;
     } else {
-        printf("FAIL (exit code %d)\n\n", exit_code);
+        printf("FAIL (expected %d, got %d)\n\n", expect_exit, exit_code);
         return 0;
     }
 }
 
 int main(void) {
-    test_case_t tests[] = {
-        {"Show help", "-h"},
-        {"Show version", "-v"},
-        {"Start at line 1 from file", "-s 1 test/testfile.txt"},
-        {"Start at line 3 from file", "-s 3 test/testfile.txt"},
-        {"Start at line 0 from stdin", "-s 0 -"},
-        {"No arguments (read from clipboard)", ""},
-        {NULL, NULL}
-    };
+	test_case_t tests[] = {
+		{"Show help", "-h", 0},
+		{"Show version", "-v", 0},
+		{"Start at line 1 from file", "-s 1 test/testfile.txt", 0},
+		{"Start at line 3 from file", "-s 3 test/testfile.txt", 0},
+		{"Start at line 3 from file", "-s 8 test/testfile.txt", 1}, // higher line value than the available lines
+		{"Start at line 0 from stdin", "-s 0 -", 1}, // this is expected to fail
+		{"Start at line 2 from piped stdin", "echo -e \"line1\\nline2\\nline3\" | bin/macos/arm64 -s 2 -", 0},
+		{"No arguments (read from clipboard)", "", 0},
+		{NULL, NULL, 0}
+	};
 
-    int passed = 0;
-    int total = 0;
-    for (int i = 0; tests[i].desc != NULL; i++) {
-        total++;
-        if (run_test(tests[i].args, tests[i].desc)) {
-            passed++;
-        }
-    }
-    printf("Summary: %d/%d tests passed\n", passed, total);
 
-    return (passed == total) ? EXIT_SUCCESS : EXIT_FAILURE;
+	int passed = 0, total = 0;
+
+	for (int i = 0; tests[i].desc != NULL; i++) {
+		total++;
+		if (run_test(tests[i].args, tests[i].desc, tests[i].expect_exit)) {
+			passed++;
+		}
+	}
+
+	printf("Summary: %d/%d tests passed\n", passed, total);
+	return (passed == total) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
