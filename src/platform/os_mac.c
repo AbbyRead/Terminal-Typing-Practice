@@ -27,11 +27,19 @@ static text_buffer_t *read_from_stream(FILE *stream, const char *error_context) 
 }
 
 text_buffer_t *platform_read_clipboard(void) {
-	FILE *clipboard = popen("pbpaste", "rb");
-	if (!clipboard) return NULL;
-	text_buffer_t *buffer = read_from_stream(clipboard, "clipboard");
-	pclose(clipboard);
-	return buffer;
+    FILE *pipe = popen("pbpaste", "r");
+    if (!pipe) {
+        fprintf(stderr, "Failed to open clipboard with pbpaste\n");
+        exit(EXIT_FAILURE);
+    }
+    text_buffer_t *buffer = read_stream_to_buffer(pipe);
+    pclose(pipe);
+
+    if (!buffer) {
+        fprintf(stderr, "Failed to read clipboard content\n");
+        exit(EXIT_FAILURE);
+    }
+    return buffer;
 }
 
 text_buffer_t *platform_read_stdin(void) {
