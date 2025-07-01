@@ -29,9 +29,15 @@ text_buffer_t *platform_read_stdin(void) {
 		exit(EXIT_FAILURE);
 	}
 	FILE *fifo = stdin;
-	if (!fifo) return NULL;
+	if (!fifo) {
+		perror("Unable to access stdin");
+		exit(EXIT_FAILURE);
+	}
 	text_buffer_t *buffer = buffer_from_stream(fifo);
-	fifo = NULL;
+	if (!buffer) {
+		perror("Failed to copy buffer");
+		exit(EXIT_FAILURE);
+	}
 	return buffer;
 }
 

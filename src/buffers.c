@@ -81,27 +81,17 @@ void append_line(line_array_t *line_array, char *new_line, size_t incoming_lengt
 }
 
 text_buffer_t *buffer_from_stream(FILE *stream) {
-	size_t size = INITIAL_SIZE;
-	char *buffer = malloc(size);
+	text_buffer_t *buffer = create_text_buffer();
 	if (!buffer) return NULL;
-
-	size_t i = 0;
 	int c;
 	while ((c = fgetc(stream)) != EOF) {
-		if (i + 1 >= size) {
-			size *= 2;
-			char *new_buf = realloc(buffer, size);
-			if (!new_buf) { free(buffer); return NULL; }
-			buffer = new_buf;
+		if (buffer->index + 1 >= buffer->size) {
+			expand_text_buffer(buffer);
 		}
-		buffer[i++] = (char)c;
+		buffer->data[buffer->index++] = (char)c;
 	}
-	buffer[i] = '\0';
-
-	text_buffer_t *result = malloc(sizeof(text_buffer_t));
-	result->data = buffer;
-	result->size = i;
-	return result;
+	buffer->data[buffer->index] = '\0';
+	return buffer;
 }
 
 line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
