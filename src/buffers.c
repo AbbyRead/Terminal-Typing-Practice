@@ -7,17 +7,20 @@
 #include "buffers.h"
 
 #define INITIAL_SIZE 4096
+#define STARTING_SLOTS 8
 
 /*
 typedef struct {
-	size_t size;
-	char *data;
+	size_t size;  // allocated size
+	size_t index; // start of next write
+	char *data;   // actual data
 } text_buffer_t;
 
 typedef struct {
-	size_t count;
-	char **line;
-	text_buffer_t *pool;
+	size_t slots; // available line slots to fill
+	size_t filled; // running total of lines filled
+	char **line;  // pointer to the start of a line
+	text_buffer_t *pool; // the text_buffer_t this wraps
 } line_array_t;
 */
 
@@ -25,21 +28,23 @@ text_buffer_t *create_text_buffer(void) {
 	char *data = malloc(INITIAL_SIZE);
 	if (!data) return NULL;
 	text_buffer_t *buffer = malloc(sizeof(text_buffer_t));
-	buffer->size = INITIAL_SIZE;
-	buffer->data = data;
+	buffer->size	= INITIAL_SIZE;
+	buffer->index	= 0;
+	buffer->data 	= data;
 	return buffer;
 }
 
-line_array_t *create_line_array(void) {
+line_array_t *create_line_array(size_t slots) {
 	line_array_t *thingy = malloc(sizeof(line_array_t));
 	if (!thingy) return NULL;
-	thingy->count = 0;
-	thingy->line = NULL;
-	thingy->pool = create_text_buffer();
+	thingy->slots	= slots;
+	thingy->filled	= 0;
+	thingy->line	= malloc(sizeof(char **) * STARTING_SLOTS);
+	thingy->pool	= create_text_buffer();
 	return thingy;
 }
 
-int expand_text_buffer(text_buffer_t *buffer) {
+void expand_text_buffer(text_buffer_t *buffer) {
 	size_t new_size = buffer->size * 2;
 	char *expanded_pool = realloc(buffer->data, new_size);
 	if (!expanded_pool) {
@@ -48,22 +53,31 @@ int expand_text_buffer(text_buffer_t *buffer) {
 	}
 	buffer->data = expanded_pool;
 	buffer->size = new_size;
-	return EXIT_SUCCESS;
 }
 
-int append_line(line_array_t *line_array, char *new_line, size_t *pool_index) {
-	// pool_index is the current spot to put a new line
+void increase_slots(line_array_t line_array) {
+	size_t new_amount = line_array->slots * 2;
+	char **new_mem = NULL;
+	new_mem = realloc(line_array->line, new_amount);
+	if (!new_mem) {
+		perror ("Failed to allocate more pointers");
+		exit(EXIT_FAILURE);
+	}
+	line_array->line = new_mem;
+	line_array->slots = new_amount;
+}
 
-	size_t char_amount = strlen(new_line);
-	if (line_array->pool->size < pool_index + char_amount + 1) {
+char *append_line(line_array_t *line_array, char *new_line, size_t incoming_length) {
+	if (line_array->slots == line_array->filled) increase_slots(line_array);
+	if (line_array->pool->index + incoming_length + 1 > line_array->pool->size) {
 		expand_text_buffer(line_array->pool);
 	}
-
-	strncat(line_array[count], new_line, char_amount)
-	line_array->count += 1;
-
-	// move string pointer along pool
-	// change pool_index to be the new location to put the next line
+	size_t i = ++line_array->filled;
+	if (line_array->pool->size < line_array->pool->index + incoming_length + 1) {
+		expand_text_buffer(line_array->pool);
+	}
+	line_array->line[i] = strncpy(line_array->line[i], new_line, incoming_length);
+	line_array->pool->index += incoming_length + 1; // move data pointer past written
 }
 
 text_buffer_t *buffer_from_stream(FILE *stream) {
@@ -91,62 +105,33 @@ text_buffer_t *buffer_from_stream(FILE *stream) {
 }
 
 line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
-	// Check if incoming buffer is missing or unpopulated
-	if (!contiguous_buffer || !contiguous_buffer->data) return NULL;
+	if (!contiguous_buffer || !contiguous_buffer_data) return NULL;
 
-	// Tokenizing modifies the content by replacing character(s) with '\0' delimiters; 
-	//  so make a copy and tokenize that instead of the uninterrupted source text copy
-	char *copy_to_delimit = strdup(contiguous_buffer->data);
+	line_array_t *line_array = create_line_array();
+	if (!line_array) return NULL;
+
+	const char *start = contiguous_buffer->pool->data;
+	const char *nl; = strchr(start, '\n');
+	while (nl) {
+		size_t length = (nl - start) / sizeof(char);
+		// append_line uses strncpy, so no need to null-terminate
+		start = append_line(line_array, start, length);
+
+		nl = strchr(start, '\n');
+	}
 	
-	line_array_t *sections_array = malloc(sizeof(line_array_t));
-	if (!sections_array) {
-		perror("Failed to allocate line array");
-		exit(EXIT_FAILURE);
-	}
-	sections_array->count = 0;
-	sections_array->line = NULL;
 
-	text_buffer_t *pool = malloc(sizeof(text_buffer_t));
-	if (!pool) {
-		perror("Failed to allocate text buffer pool");
-		exit(EXIT_FAILURE);
-	}
-	pool->size = INITIAL_SIZE;
 
-	char *section = copy_to_delimit;
-	char *found_newline;
 
-	size_t i = 0;
+}
 
-	// NOT using strtok (in order to retain blank lines)
-	do {  // delimit this copy of the buffer
-		found_newline = strchr(section, '\n');
-		if (found_newline) {
-			*found_newline = '\0';
-			section = found_newline + 1;
-		}
-	} while (found_newline);
 
-	sections_array.count = i;
-	section = copy_to_delimit;  // reset section marker
-
-	// allocate memory for an arbitrary number of pointer variables
-	sections_array.line = malloc(i * sizeof(char *));
-
-	// assign section addresses to the line_array_t
-	for (i = 0; i < sections_array.count; i++) {
-		sections_array.line[i] = section;
-		section = section + strlen(section) + 1;
-	}
-	return sections_array;  // pointer to a filled line_array_t
-}  // caller responsible for freeing
-
+/* CLEANUP ROUTINES */
 void *free_text_buffer(text_buffer_t *buffer) {
 	free(buffer->data);
 	free(buffer);
 	return NULL;
 }
-
 void *free_line_array(line_array_t *line_array) {
 	free_text_buffer(line_array->pool);
 	free(line_array);
