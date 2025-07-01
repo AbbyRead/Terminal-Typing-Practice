@@ -114,16 +114,12 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 	const char *nl = strchr(start, '\n');
 	while (nl) {
 		size_t length = (nl - start) / sizeof(char);
-		
 		append_line(line_array, start, length);
-
 		start = nl + 1; // increment for next iteration
-
-		// Look for the next newline character
-		nl = strchr(start, '\n');
+		nl = strchr(start, '\n'); // Look for the next newline character
 	}
+	return line_array;
 }
-
 
 /* CLEANUP ROUTINES */
 void *free_text_buffer(text_buffer_t *buffer) {
