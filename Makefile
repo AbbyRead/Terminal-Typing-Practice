@@ -176,3 +176,28 @@ windows-arm64: $(WIN_BIN_DIR) $(WIN_OBJS_arm64)
 
 clean-windows:
 	rm -rf $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64) $(WIN_BIN_DIR)
+
+# === Testing ===
+
+TEST_DIR       := test
+TEST_SRC       := $(TEST_DIR)/test.c
+TEST_BIN       := $(BIN_DIR)/test
+TEST_PROGRAM   := $(MACOS_BIN_DIR)/arm64
+
+.PHONY: test
+
+test: $(TEST_BIN) test/testfile.txt
+	@echo "Running test suite..."
+	@TEST_PROGRAM=$(TEST_PROGRAM) $(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRC) | $(BIN_DIR)
+	@echo "Compiling test binary: $@"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+test/testfile.txt:
+	@mkdir -p $(dir $@)
+	@echo "Line 1" > $@
+	@echo "Line 2" >> $@
+	@echo "Line 3" >> $@
+	@echo "Line 4" >> $@
+	@echo "Line 5" >> $@
