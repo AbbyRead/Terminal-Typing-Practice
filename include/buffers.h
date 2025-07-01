@@ -12,7 +12,7 @@ typedef struct {
 typedef struct {
 	size_t count;
 	char **line;
-	text_buffer_t pool;
+	text_buffer_t *pool;
 } line_array_t;
 
 

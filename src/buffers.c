@@ -8,6 +8,19 @@
 
 #define INITIAL_SIZE 4096
 
+/*
+typedef struct {
+	size_t size;
+	char *data;
+} text_buffer_t;
+
+typedef struct {
+	size_t count;
+	char **line;
+	text_buffer_t *pool;
+} line_array_t;
+*/
+
 text_buffer_t *create_text_buffer(void) {
 	char *data = malloc(INITIAL_SIZE);
 	if (!data) return NULL;
@@ -15,6 +28,13 @@ text_buffer_t *create_text_buffer(void) {
 	buffer.size = INITIAL_SIZE;
 	buffer.data = data;
 	return buffer;
+}
+
+line_array_t *create_line_array() {
+	line_array_t *thingy = {0, NULL, {0}};
+	thingy = malloc(sizeof(line_array_t));
+	thingy->pool = create_text_buffer();
+	return thingy;
 }
 
 int expand_text_buffer(text_buffer_t *buffer) {
@@ -60,13 +80,13 @@ line_array_t *tokenize_lines(const text_buffer_t *contiguous_buffer) {
 	// Tokenizing modifies the content by replacing character(s) with '\0' delimiters; 
 	//  so make a copy and tokenize that instead of the uninterrupted source text copy
 	char *copy_to_delimit = strdup(contiguous_buffer->data);
-	text_buffer_t pool = {
+	text_buffer_t *pool = {
 		.size = strlen(copy_to_delimit),
 		.data = copy_to_delimit };
 	line_array_t sections_array = {
 		.count = 0, 
 		.line = NULL, 
-		.pool = pool };
+		.pool = *pool };
 	char *section = copy_to_delimit;
 	char *found_newline;
 

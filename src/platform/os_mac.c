@@ -6,7 +6,7 @@
 #include "platform.h"
 #include "buffers.h"
 
-#define LINE_MAX 2048
+#define STRING_MAX 2048
 
 enum Platform platform = MACOS;
 

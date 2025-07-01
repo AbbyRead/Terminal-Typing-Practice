@@ -24,10 +24,15 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Somehow failed to determine source text type.\n"); 
 			exit(EXIT_FAILURE);
 	}
-	// These allocate memory that should be freed elsewhere later
+
+	// These will allocate memory that should be freed later
+	// Tokenize ingest
 	prompt_lines = tokenize_lines(copy_of_source);
+	// Run through it with continual prompts
+	// Supply prompt_lines to function and it returns user_lines
 	users_lines = prompt_user(prompt_lines);
 
+	// Free memory used at the end of program
 	prompt_lines = free_line_array(prompt_lines);
 	users_lines = free_line_array(users_lines);
 	return EXIT_SUCCESS;

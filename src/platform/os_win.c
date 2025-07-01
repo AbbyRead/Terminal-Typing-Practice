@@ -10,7 +10,7 @@
 #include "platform.h"
 #include "options.h"
 
-#define LINE_MAX 8191
+#define STRING_MAX 8191
 
 enum Platform platform = WINDOWS;
 
