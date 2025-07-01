@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 	platform_initialize();
 
 	invocation_t invocation;
-	parse_options(argc, argv, &invo);
+	parse_options(argc, argv, &invocation);
 
 	text_buffer_t *copy_of_source = NULL;
 	line_array_t  *prompt_lines   = NULL;

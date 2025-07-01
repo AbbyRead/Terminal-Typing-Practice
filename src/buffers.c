@@ -34,14 +34,14 @@ text_buffer_t *create_text_buffer(void) {
 	return buffer;
 }
 
-line_array_t *create_line_array(size_t slots) {
-	line_array_t *thingy = malloc(sizeof(line_array_t));
-	if (!thingy) return NULL;
-	thingy->slots	= slots;
-	thingy->filled	= 0;
-	thingy->line	= malloc(sizeof(char **) * STARTING_SLOTS);
-	thingy->pool	= create_text_buffer();
-	return thingy;
+line_array_t *create_line_array() {
+	line_array_t *array = malloc(sizeof(line_array_t));
+	if (!array) return NULL;
+	array->slots	= STARTING_SLOTS;
+	array->filled	= 0;
+	array->line	= malloc(sizeof(char **) * STARTING_SLOTS);
+	array->pool	= create_text_buffer();
+	return array;
 }
 
 void expand_text_buffer(text_buffer_t *buffer) {
@@ -57,8 +57,7 @@ void expand_text_buffer(text_buffer_t *buffer) {
 
 void increase_slots(line_array_t *line_array) {
 	size_t new_amount = line_array->slots * 2;
-	char **new_mem = NULL;
-	new_mem = realloc(line_array->line, new_amount);
+	char **new_mem = realloc(line_array->line, new_amount * sizeof(char *));
 	if (!new_mem) {
 		perror ("Failed to allocate more pointers");
 		exit(EXIT_FAILURE);
@@ -75,7 +74,8 @@ void append_line(line_array_t *line_array, char *new_line, size_t incoming_lengt
 	}
 	size_t data_i = line_array->pool->index;
 	line_array->line[i] = &line_array->pool->data[data_i];
-	line_array->line[i] = strncpy(line_array->line[i], new_line, incoming_length);
+	strncpy(line_array->line[i], new_line, incoming_length);
+	line_array->line[i][incoming_length] = '\0';
 	line_array->filled++;
 	line_array->pool->index += incoming_length + 1; // move data pointer past written
 }
