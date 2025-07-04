@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define MAX_LINE_LEN 2048
-
 typedef struct {
 	size_t size;  // allocated size
 	size_t index; // start of next write

@@ -17,8 +17,8 @@ CFLAGS      += -std=c99 -Wall -Wextra -Wpedantic
 CFLAGS      += -g -O0
 CFLAGS      += -Wshadow -Wconversion -Wsign-conversion
 CFLAGS      += -Wfloat-equal -Wstrict-prototypes -Wundef -Wredundant-decls
-CFLAGS      += -fsanitize=address,undefined -fno-omit-frame-pointer
-LDFLAGS     += -fsanitize=address,undefined -Wl,-fatal_warnings
+CFLAGS      += -fno-omit-frame-pointer
+LDFLAGS     += -Wl,-fatal_warnings
 
 # Version header generation for release numbering
 VERSION_H := $(INCLUDE_DIR)/version.h

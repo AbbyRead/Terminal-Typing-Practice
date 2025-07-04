@@ -9,7 +9,6 @@
 enum Platform platform = MACOS;
 
 void platform_initialize(void) {
-	setenv("MallocNanoZone", "0", 1);
 	setlocale(LC_CTYPE, "");
 }
 
