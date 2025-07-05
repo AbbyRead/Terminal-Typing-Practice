@@ -295,7 +295,8 @@ endif
 IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
 
 release: dist
-	gh release create $(PROGRAM_VERSION) \
+	@echo "Creating GitHub release for version $(PROGRAM_VERSION)"
+	@gh release create $(PROGRAM_VERSION) \
 		--title "Release $(PROGRAM_VERSION)" \
 		--notes "$(NOTE)" \
 		$(if $(IS_PRERELEASE),--prerelease) \
