@@ -257,7 +257,7 @@ $(LINUX_BIN_DIR):
 $(DST_DIR):
 	mkdir -p $@
 
-dist: $(DST_DIR) macos-universal windows-x86_64 linux-x86_64
+dist: macos-universal windows-x86_64 linux-x86_64 | $(DST_DIR)
 	@echo "Copying and renaming binaries to $(DST_DIR)/"
 
 	# Copy the universal macOS binary only, with version suffix
@@ -299,7 +299,7 @@ release: dist
 	gh release create $(PROGRAM_VERSION) \
 		--title "Release $(PROGRAM_VERSION)" \
 		--notes "$(NOTE)" \
-		$(RELEASE_FLAGS) \
+		$(if $(RELEASE_FLAGS),"$(RELEASE_FLAGS)",) \
 		$(wildcard $(DST_DIR)/*)
 
 # === Testing ===
