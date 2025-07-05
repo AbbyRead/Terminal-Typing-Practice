@@ -36,11 +36,12 @@ version_h: | $(INCLUDE_DIR)
 	@echo '#endif' >> $(VERSION_H)
 
 .PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
-        windows windows-x86_64 windows-arm64 windows-i686 clean clean-macos clean-windows clean-test test
+        windows windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
+		clean clean-macos clean-windows clean-linux clean-test test
 
 # === Meta Targets ===
 
-all: macos windows
+all: macos windows linux
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -65,6 +66,7 @@ SRCS := $(filter-out $(SRC_DIR)/main.c, $(ALL_SRC))
 # platform-specific
 MACOS_SRCS := $(SRCS) $(SRC_DIR)/platform/os_mac.c $(SRC_DIR)/main.c
 WIN_SRCS   := $(SRCS) $(SRC_DIR)/platform/os_win.c $(SRC_DIR)/main.c
+LINUX_SRCS := $(SRCS) $(SRC_DIR)/platform/os_linux.c $(SRC_DIR)/main.c
 
 # === Native Compilation for macOS ===
 
@@ -195,6 +197,29 @@ windows-arm64: $(WIN_BIN_DIR) $(WIN_OBJS_arm64)
 
 clean-windows:
 	rm -rf $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64) $(WIN_BIN_DIR)
+
+# === Cross-compilation to Linux ===
+
+linux: linux-x86_64
+
+LINUX_BIN_DIR := $(BIN_DIR)/linux
+LINUX_OBJ_DIR := $(OBJ_DIR)/linux-x86_64
+LINUX_BIN     := $(LINUX_BIN_DIR)/x86_64
+LINUX_OBJS    := $(patsubst $(SRC_DIR)/%.c,$(LINUX_OBJ_DIR)/%.o,$(LINUX_SRCS))
+
+linux-x86_64: $(LINUX_BIN)
+
+$(LINUX_BIN): $(LINUX_OBJS) | $(LINUX_BIN_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Linking Linux x86_64 binary: $@"
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^
+
+$(LINUX_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(LINUX_BIN_DIR):
+	@mkdir -p $@
 
 # === Testing ===
 

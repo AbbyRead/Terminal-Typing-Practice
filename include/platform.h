@@ -7,7 +7,7 @@
 
 // Cross-platform abstractions (e.g., timing, clipboard, file handling)
 
-enum Platform {MACOS, WINDOWS};
+enum Platform {MACOS, WINDOWS, LINUX};
 
 extern enum Platform platform;
 
