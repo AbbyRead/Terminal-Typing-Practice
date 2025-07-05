@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
 		// start at the end minus the number of lines specified
 		invocation.start_line += (ssize_t)prompt_lines->filled + 1;
 	}
-	if (invocation.start_line-- <= 0) {  // post-decrement to make the error text clearer
+	if (invocation.start_line <= 0) {
 		// should only be able to get here if negative specified is more than available lines
-		fprintf(stderr, "Offset specified is %zd lines beyond start of text.\n", invocation.start_line);
+		fprintf(stderr, "Offset specified is %zd lines beyond start of text.\n", --invocation.start_line);
 		exit(EXIT_FAILURE);
 	}
 
