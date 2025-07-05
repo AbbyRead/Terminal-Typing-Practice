@@ -2,7 +2,5 @@
 #define VERSION_H
 
 #define PROGRAM_VERSION "v1.3.0"
-#define GIT_COMMIT_HASH "746e674"
-#define GIT_BRANCH "main"
 
 #endif /* VERSION_H */

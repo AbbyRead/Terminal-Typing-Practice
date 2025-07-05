@@ -50,7 +50,7 @@ macos: $(VERSION_H) macos-arm64 macos-x86_64 macos-universal
 windows: $(VERSION_H) windows-x86_64 windows-i686 windows-arm64
 linux: $(VERSION_H) linux-x86_64
 
-version: $(VERSION_H)
+version: | $(VERSION_H)
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
 		echo '#ifndef VERSION_H' > $@; \
