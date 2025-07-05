@@ -12,7 +12,7 @@ bindir ?= $(prefix)/bin
 SRC_DIR       := src
 OBJ_DIR       := obj
 BIN_DIR       := bin
-DST_DIR       ?= dist
+DST_DIR       ?= dst
 INCLUDE_DIR   := include
 
 # Common Defaults
@@ -252,7 +252,12 @@ $(LINUX_BIN_DIR):
 	@mkdir -p $@
 
 # Distribution copies
-dist: clean all $(VERSION_H) | $(DST_DIR)
+.PHONY: dist
+
+$(DST_DIR):
+    mkdir -p $@
+
+dist: $(DST_DIR) macos-universal windows-x86_64 linux-x86_64
 	@echo "Copying and renaming binaries to $(DST_DIR)/"
 
 	# Copy the universal macOS binary only, with version suffix
