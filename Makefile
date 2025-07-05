@@ -1,4 +1,3 @@
-PROGRAM_VERSION ?= E0.0.0
 .DEFAULT_GOAL := macos-arm64
 .SILENT:
 
@@ -34,6 +33,17 @@ GIT_HASH := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 VERSION_H := $(INCLUDE_DIR)/version.h
+
+# Make builds depend on the version header
+ALL_TARGETS := macos windows linux
+
+all: $(VERSION_H) $(ALL_TARGETS)
+
+# Make every target depend on version.h
+macos: $(VERSION_H) macos-arm64 macos-x86_64 macos-universal
+windows: $(VERSION_H) windows-x86_64 windows-i686 windows-arm64
+linux: $(VERSION_H) linux-x86_64
+
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
 	@if [ -z "$(PROGRAM_VERSION)" ]; then \
@@ -52,6 +62,8 @@ EOF
 #define VERSION_H
 
 #define PROGRAM_VERSION "$(PROGRAM_VERSION)"
+#define GIT_COMMIT_HASH "$(GIT_HASH)"
+#define GIT_BRANCH "$(GIT_BRANCH)"
 
 #endif /* VERSION_H */
 EOF
@@ -110,7 +122,7 @@ $(MACOS_BIN_arm64): $(MACOS_OBJS_arm64) | $(MACOS_BIN_DIR)
 	@echo "Linking macOS arm64 binary: $@"
 	$(CC) $(MACOS_CFLAGS_arm64) $(LDFLAGS) -o $@ $^
 
-$(MACOS_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c
+$(MACOS_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(MACOS_CFLAGS_arm64) -c $< -o $@
 
@@ -131,7 +143,7 @@ $(MACOS_BIN_x86_64): $(MACOS_OBJS_x86_64) | $(MACOS_BIN_DIR)
 	@echo "Linking macOS x86_64 binary: $@"
 	$(CC) $(MACOS_CFLAGS_x86_64) $(LDFLAGS) -o $@ $^
 
-$(MACOS_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c
+$(MACOS_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(MACOS_CFLAGS_x86_64) -c $< -o $@
 
@@ -190,15 +202,15 @@ $(OBJ_DIR):
 $(WIN_OBJ_DIRS): | $(OBJ_DIR)
 	@mkdir -p $@
 
-$(WIN_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
+$(WIN_OBJ_DIR_x86_64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR) $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_x86_64) -c $< -o $@
 
-$(WIN_OBJ_DIR_i686)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
+$(WIN_OBJ_DIR_i686)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR) $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_i686) -c $< -o $@
 
-$(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
+$(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR) $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(WIN_CC) $(CPPFLAGS) $(WIN_CFLAGS_arm64) -c $< -o $@
 
@@ -236,7 +248,7 @@ $(LINUX_BIN): $(LINUX_OBJS) | $(LINUX_BIN_DIR)
 	@echo "Linking Linux x86_64 binary"
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-$(LINUX_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(LINUX_OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(VERSION_H)
 	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
@@ -246,21 +258,39 @@ $(LINUX_BIN_DIR):
 # Distribution copies
 dist: clean all $(VERSION_H) | $(DST_DIR)
 	@echo "Copying and renaming binaries to $(DST_DIR)/"
-	@for file in $(MACOS_BIN_DIR)/*; do \
+
+	# Copy the universal macOS binary only, with version suffix
+	@if [ -f "$(MACOS_BIN_DIR)/universal" ]; then \
+		cp -a "$(MACOS_BIN_DIR)/universal" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-universal"; \
+	fi
+
+	# Optionally copy arch-specific macOS binaries with arch suffixes
+	@for arch in arm64 x86_64; do \
+		file="$(MACOS_BIN_DIR)/$$arch"; \
 		if [ -f "$$file" ]; then \
-			base=$$(basename $$file); \
-			cp -a "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-universal"; \
-		fi \
+			cp -a "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-$$arch"; \
+		fi; \
 	done
+
+	# Copy Windows executables with architecture suffixes
 	@for file in $(WIN_BIN_DIR)/*.exe; do \
 		if [ -f "$$file" ]; then \
 			base=$$(basename $$file .exe); \
-			cp "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-windows-$${base}.exe"; \
+			cp "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-windows-$$base.exe"; \
 		fi \
 	done
 
+	# Similarly, you could add Linux binaries if desired
+	@if [ -f "$(LINUX_BIN_DIR)/x86_64" ]; then \
+		cp "$(LINUX_BIN_DIR)/x86_64" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-linux-x86_64"; \
+	fi
+
 # GitHub release automation
-NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
+ifeq ($(findstring -, $(PROGRAM_VERSION)),)
+  NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
+else
+  NOTE ?= "Beta prerelease of version $(PROGRAM_VERSION)"
+endif
 IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
 RELEASE_FLAGS := $(if $(IS_PRERELEASE),--prerelease,)
 
