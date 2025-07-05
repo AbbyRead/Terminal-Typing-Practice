@@ -11,7 +11,7 @@ typedef enum {
 typedef struct {
 	ingest_mode_t mode;
 	const char *filename;
-	size_t start_line;
+	ssize_t start_line;
 } invocation_t;
 
 int parse_options(int argc, char **argv, invocation_t *invo);

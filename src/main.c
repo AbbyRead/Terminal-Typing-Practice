@@ -31,7 +31,19 @@ int main(int argc, char *argv[]) {
 		perror("Failed to tokenize lines from source text");
 		exit(EXIT_FAILURE);
 	}
-	users_lines = prompt_user(prompt_lines, invocation.start_line);
+
+	if (invocation.start_line < 0) {
+		// start at the end minus the number of lines specified
+		invocation.start_line += (ssize_t)prompt_lines->filled + 1;
+	}
+	if (invocation.start_line-- <= 0) {  // post-decrement to make the error text clearer
+		// should only be able to get here if negative specified is more than available lines
+		fprintf(stderr, "Offset specified is %zd lines beyond start of text.\n", invocation.start_line);
+		exit(EXIT_FAILURE);
+	}
+
+	users_lines = prompt_user(prompt_lines, (size_t)invocation.start_line);
+
 	if (!users_lines) {
 		fprintf(stderr, "Prompting failed or returned no user input.\n");
 		return EXIT_FAILURE;

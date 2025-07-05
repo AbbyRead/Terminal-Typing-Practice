@@ -21,7 +21,7 @@ typebelow [options]             # Source from OS copy/paste clipboard
 
 Options:
   -s <positive_number>          # Start from the specified line number
-# -s <negative_number>          # Start a number of lines from the end  (coming later)
+  -s <negative_number>          # Start a number of lines from the end
   -h, --help                    # Show this help message and exit
   -v, --version                 # Show program version and exit
 
