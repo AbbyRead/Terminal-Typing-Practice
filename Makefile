@@ -286,13 +286,8 @@ dist: macos-universal windows-x86_64 linux-x86_64 | $(DST_DIR)
 		cp "$(LINUX_BIN_DIR)/x86_64" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-linux-x86_64"; \
 	fi
 
-# GitHub release automation
-ifeq ($(findstring -, $(PROGRAM_VERSION)),)
-  NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
-else
-  NOTE ?= "Beta prerelease of version $(PROGRAM_VERSION)"
-endif
-IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
+# GitHub release automation (no prerelease logic, ever)
+NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
 
 release: dist
 	@echo "Creating GitHub release for version $(PROGRAM_VERSION)"
