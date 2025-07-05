@@ -293,13 +293,12 @@ else
   NOTE ?= "Beta prerelease of version $(PROGRAM_VERSION)"
 endif
 IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
-RELEASE_FLAGS := $(if $(IS_PRERELEASE),--prerelease,)
 
 release: dist
 	gh release create $(PROGRAM_VERSION) \
 		--title "Release $(PROGRAM_VERSION)" \
 		--notes "$(NOTE)" \
-		$(if $(RELEASE_FLAGS),"$(RELEASE_FLAGS)",) \
+		$(if $(IS_PRERELEASE),--prerelease) \
 		$(wildcard $(DST_DIR)/*)
 
 # === Testing ===
