@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #include "platform.h"
 #include "buffers.h"
@@ -10,6 +11,10 @@ enum Platform platform = MACOS;
 
 void platform_initialize(void) {
 	setlocale(LC_CTYPE, "");
+}
+
+void platform_delay_ms(int milliseconds) {
+	usleep((useconds_t)(milliseconds * 1000));  // usleep uses microseconds
 }
 
 static text_buffer_t *read_from_stream(FILE *stream, const char *error_context) {
@@ -55,4 +60,14 @@ text_buffer_t *platform_read_file(const char *filename) {
 	text_buffer_t *buffer = read_from_stream(file, filename);
 	fclose(file);
 	return buffer;
+}
+
+int get_terminal_height(void) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	return w.ws_row;
+}
+
+void move_cursor_up(int lines) {
+    printf("\033[%dA", lines);  // ANSI escape: move cursor up
 }

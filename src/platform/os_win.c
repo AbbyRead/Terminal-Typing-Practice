@@ -9,9 +9,24 @@
 
 enum Platform platform = WINDOWS;
 
+void enable_virtual_terminal_processing(void) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) return;
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) return;
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+}
+
 void platform_initialize(void) {
     // On Windows, you might want to set console mode or locale here if needed.
     // For now, no special initialization needed.
+}
+
+void platform_delay_ms(int milliseconds) {
+	Sleep(milliseconds);
 }
 
 static text_buffer_t *read_from_stream(FILE *stream, const char *error_context) {
@@ -104,4 +119,24 @@ text_buffer_t *platform_read_file(const char *filename) {
     text_buffer_t *buffer = read_from_stream(file, filename);
     fclose(file);
     return buffer;
+}
+
+int get_terminal_height(void) {
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	int columns, rows;
+
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	return rows;
+}
+
+void move_cursor_up(int lines) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    COORD pos;
+
+    GetConsoleScreenBufferInfo(hOut, &csbi);
+    pos.X = 0;
+    pos.Y = csbi.dwCursorPosition.Y - lines;
+    SetConsoleCursorPosition(hOut, pos);
 }

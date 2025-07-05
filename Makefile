@@ -211,7 +211,7 @@ linux-x86_64: $(LINUX_BIN)
 
 $(LINUX_BIN): $(LINUX_OBJS) | $(LINUX_BIN_DIR)
 	@mkdir -p $(dir $@)
-	@echo "Linking Linux x86_64 binary: $@"
+	@echo "Linking Linux x86_64 binary"
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 $(LINUX_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -220,6 +220,30 @@ $(LINUX_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 $(LINUX_BIN_DIR):
 	@mkdir -p $@
+
+# Distribution copies
+dist: clean all $(VERSION_H) | $(DST_DIR)
+	@echo "Copying and renaming binaries to $(DST_DIR)/"
+	@for file in $(MACOS_BIN_DIR)/*; do \
+		if [ -f "$$file" ]; then \
+			base=$$(basename $$file); \
+			cp -a "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-universal"; \
+		fi \
+	done
+	@for file in $(WIN_BIN_DIR)/*.exe; do \
+		if [ -f "$$file" ]; then \
+			base=$$(basename $$file .exe); \
+			cp "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-windows-$${base}.exe"; \
+		fi \
+	done
+
+# GitHub release automation
+NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
+release: dist
+	gh release create $(PROGRAM_VERSION) \
+		--title "Release $(PROGRAM_VERSION)" \
+		--notes "$(NOTE)" \
+		$(wildcard $(DST_DIR)/*)
 
 # === Testing ===
 

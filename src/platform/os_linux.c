@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 
 #include "buffers.h"
 #include "platform.h"
@@ -13,6 +14,10 @@ enum Platform platform = LINUX;
 
 void platform_initialize(void) {
 	setlocale(LC_CTYPE, "");
+}
+
+void platform_delay_ms(int milliseconds) {
+	usleep((useconds_t)(milliseconds * 1000));  // usleep uses microseconds
 }
 
 // Clipboard support using `xclip` or `xsel` (fallback)
@@ -75,11 +80,12 @@ text_buffer_t *platform_read_file(const char *file_arg) {
 // Get terminal height (uses TIOCGWINSZ ioctl)
 #include <sys/ioctl.h>
 
-static int get_terminal_height(void) __attribute__((unused));
-static int get_terminal_height(void) {
+int get_terminal_height(void) {
 	struct winsize w;
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-		return 24; // fallback
-	}
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	return w.ws_row;
+}
+
+void move_cursor_up(int lines) {
+    printf("\033[%dA", lines);  // ANSI escape: move cursor up
 }
