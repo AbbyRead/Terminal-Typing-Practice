@@ -1,95 +1,107 @@
-#define WIN32_LEAN_AND_MEAN
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <conio.h>
+
+#include <io.h>
 #include <windows.h>
-#include <string.h>
 
 #include "platform.h"
-#include "options.h"
+#include "buffers.h"
 
 enum Platform platform = WINDOWS;
 
 void platform_initialize(void) {
-	setlocale(LC_CTYPE, "");
+    // On Windows, you might want to set console mode or locale here if needed.
+    // For now, no special initialization needed.
 }
 
-char *platform_read_clipboard(void) {
-	if (!OpenClipboard(NULL)) {
-		return NULL;
-	}
-	HANDLE hData = GetClipboardData(CF_UNICODETEXT);
-	if (!hData) {
-		CloseClipboard();
-		return NULL;
-	}
-	LPCWSTR wtext = (LPCWSTR)GlobalLock(hData);
-	if (!wtext) {
-		CloseClipboard();
-		return NULL;
-	}
-	// Convert from wide char to UTF-8
-	int size_needed = WideCharToMultiByte(CP_UTF8, 0, wtext, -1, NULL, 0, NULL, NULL) + 1;
-	if (size_needed <= 0) {
-		GlobalUnlock(hData);
-		CloseClipboard();
-		return NULL;
-	}
-	char *buffer = malloc(size_needed);
-	if (!buffer) {
-		GlobalUnlock(hData);
-		CloseClipboard();
-		return NULL;
-	}
-	WideCharToMultiByte(CP_UTF8, 0, wtext, -1, buffer, size_needed, NULL, NULL);
-	buffer[size_needed - 1] = '\0';
-	GlobalUnlock(hData);
-	CloseClipboard();
-	return buffer;
+static text_buffer_t *read_from_stream(FILE *stream, const char *error_context) {
+    if (!stream) {
+        fprintf(stderr, "Unable to open stream: %s\n", error_context);
+        exit(EXIT_FAILURE);
+    }
+    text_buffer_t *buffer = read_stream_to_buffer(stream);
+    if (!buffer) {
+        fprintf(stderr, "Failed to read stream into buffer: %s\n", error_context);
+        exit(EXIT_FAILURE);
+    }
+    return buffer;
 }
 
-char *platform_read_stdin(void) {
-	if (_isatty(fileno(stdin))) {
-		perror("No piped or redirected input detected");
-		exit(EXIT_FAILURE);
-	}
-	FILE *fifo = stdin;
-	if (!fifo) {
-		perror("Unable to assign stdin");
-		exit(EXIT_FAILURE);
-	}
-	char *buffer = buffer_from_stream(fifo);
-	if (!buffer) {
-		perror("Failed to create buffer");
-		exit(EXIT_FAILURE);
-	}
-	fifo = NULL;
-	return buffer;
+text_buffer_t *platform_read_clipboard(void) {
+    if (!OpenClipboard(NULL)) {
+        fprintf(stderr, "Failed to open clipboard\n");
+        exit(EXIT_FAILURE);
+    }
+
+    HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+    if (hData == NULL) {
+        CloseClipboard();
+        fprintf(stderr, "No text data in clipboard\n");
+        exit(EXIT_FAILURE);
+    }
+
+    LPCWSTR pszText = (LPCWSTR)GlobalLock(hData);
+    if (pszText == NULL) {
+        CloseClipboard();
+        fprintf(stderr, "Failed to lock clipboard data\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Convert wide-char UTF-16 clipboard text to UTF-8
+    int utf8_len = WideCharToMultiByte(CP_UTF8, 0, pszText, -1, NULL, 0, NULL, NULL);
+    if (utf8_len <= 0) {
+        GlobalUnlock(hData);
+        CloseClipboard();
+        fprintf(stderr, "Failed to convert clipboard text to UTF-8\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char *utf8_str = malloc(utf8_len);
+    if (!utf8_str) {
+        GlobalUnlock(hData);
+        CloseClipboard();
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
+
+    WideCharToMultiByte(CP_UTF8, 0, pszText, -1, utf8_str, utf8_len, NULL, NULL);
+
+    GlobalUnlock(hData);
+    CloseClipboard();
+
+    // Copy utf8_str into a text_buffer_t
+    text_buffer_t *buffer = create_text_buffer();
+    if (!buffer) {
+        free(utf8_str);
+        fprintf(stderr, "Failed to create text buffer\n");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t len = strlen(utf8_str);
+    if (buffer->size < len + 1) {
+        expand_text_buffer(buffer);
+    }
+
+    memcpy(buffer->data, utf8_str, len + 1);
+    buffer->index = len;
+
+    free(utf8_str);
+    return buffer;
 }
 
-char *platform_read_file(char *file_arg) {
-	FILE *file = fopen(file_arg, "rb");
-	if (!file) {
-		perror("Unable to open file");
-		exit(EXIT_FAILURE);
-	}
-	char *buffer = buffer_from_stream(file);
-	if (!buffer) {
-		perror("Failed to create buffer");
-		fclose(file);
-		exit(EXIT_FAILURE);
-	}
-	fclose(file);
-	return buffer;
+text_buffer_t *platform_read_stdin(void) {
+    // Similar to macOS: check if input is from pipe or file, otherwise error
+    if (_isatty(_fileno(stdin))) {
+        fprintf(stderr, "No piped or redirected input detected.\n");
+        exit(EXIT_FAILURE);
+    }
+    return read_from_stream(stdin, "stdin");
 }
 
-static int get_terminal_height(void){
-	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
-		return 24; // a common number of lines on failure
-	}
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-	return (int16_t)(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+text_buffer_t *platform_read_file(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) return NULL;
+    text_buffer_t *buffer = read_from_stream(file, filename);
+    fclose(file);
+    return buffer;
 }
