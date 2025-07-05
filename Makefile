@@ -29,23 +29,33 @@ LDFLAGS     += -Wl,-fatal_warnings
 # Version header generation for release numbering
 $(INCLUDE_DIR):
 	mkdir -p $@
-	
+
 GIT_HASH := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 VERSION_H := $(INCLUDE_DIR)/version.h
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
-	@cat > $@ << EOF
+	@if [ -z "$(PROGRAM_VERSION)" ]; then \
+		cat > $@ << EOF
 #ifndef VERSION_H
 #define VERSION_H
 
-#define PROGRAM_VERSION "$(PROGRAM_VERSION)"
 #define GIT_COMMIT_HASH "$(GIT_HASH)"
 #define GIT_BRANCH "$(GIT_BRANCH)"
 
 #endif /* VERSION_H */
 EOF
+	else \
+		cat > $@ << EOF
+#ifndef VERSION_H
+#define VERSION_H
+
+#define PROGRAM_VERSION "$(PROGRAM_VERSION)"
+
+#endif /* VERSION_H */
+EOF
+	fi
 
 .PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
         windows windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
