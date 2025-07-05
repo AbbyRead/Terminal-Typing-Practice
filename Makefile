@@ -1,10 +1,12 @@
 .DEFAULT_GOAL := macos-arm64
 .SILENT:
+PROGRAM_NAME	:= typebelow
+PROGRAM_VERSION ?= v1.3.0
 
 # === GNU Standard Variables ===
 INSTALL ?= install    # GNU: support 'install' variable
-prefix ?= /usr/local  # GNU: standard install prefix
-bindir ?= $(prefix)/bin
+DEST_DIR ?= /usr/local  # GNU: standard install prefix
+INSTALL_DIR ?= $(DEST_DIR)/bin
 
 # === Project Structure ===
 
@@ -74,11 +76,11 @@ $(VERSION_H): | $(INCLUDE_DIR)
 all: macos windows linux
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -m 755 $(BIN_DIR)/macos/universal $(DESTDIR)$(bindir)/yourprog  # GNU: standard install
+	$(INSTALL) -d $(INSTALL_DIR)
+	$(INSTALL) -m 755 $(BIN_DIR)/macos/universal $(INSTALL_DIR)/$(PROGRAM_NAME)  # GNU: standard install
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/yourprog  # GNU: uninstall target
+	rm -f $(INSTALL_DIR)/$(PROGRAM_NAME)  # GNU: uninstall target
 
 distclean: clean
 	rm -f $(VERSION_H)  # GNU: remove generated config files too
@@ -257,44 +259,25 @@ $(LINUX_BIN_DIR):
 $(DST_DIR):
 	mkdir -p $@
 
-dist: macos-universal windows-x86_64 linux-x86_64 | $(DST_DIR)
-	@echo "Copying and renaming binaries to $(DST_DIR)/"
-
-	# Copy the universal macOS binary only, with version suffix
-	@if [ -f "$(MACOS_BIN_DIR)/universal" ]; then \
-		cp -a "$(MACOS_BIN_DIR)/universal" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-universal"; \
-	fi
-
-	# Optionally copy arch-specific macOS binaries with arch suffixes
-	@for arch in arm64 x86_64; do \
-		file="$(MACOS_BIN_DIR)/$$arch"; \
-		if [ -f "$$file" ]; then \
-			cp -a "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-macos-$$arch"; \
-		fi; \
+FILES := $(shell find $(BIN_DIR) -mindepth 2 -type f)
+dist: macos windows linux | $(DST_DIR)
+	@for f in $(FILES); do \
+		dirname=$$(basename $$(dirname $$f)); \
+		filename=$$(basename $$f); \
+		newname="$(PROGRAM_NAME)-$(PROGRAM_VERSION)-$$dirname-$$filename"; \
+		echo "Copying $$f to $(DST_DIR)/$$newname"; \
+		cp "$$f" "$(DST_DIR)/$$newname"; \
 	done
-
-	# Copy Windows executables with architecture suffixes
-	@for file in $(WIN_BIN_DIR)/*.exe; do \
-		if [ -f "$$file" ]; then \
-			base=$$(basename $$file .exe); \
-			cp "$$file" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-windows-$$base.exe"; \
-		fi \
-	done
-
-	# Similarly, you could add Linux binaries if desired
-	@if [ -f "$(LINUX_BIN_DIR)/x86_64" ]; then \
-		cp "$(LINUX_BIN_DIR)/x86_64" "$(DST_DIR)/typebelow-$(PROGRAM_VERSION)-linux-x86_64"; \
-	fi
 
 # GitHub release automation (no prerelease logic, ever)
 NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
 
+RELEASE_FILES := $(wildcard $(DST_DIR)/*)
+
 release: dist
 	@echo "Creating GitHub release for version $(PROGRAM_VERSION)"
-	@gh release create "$(PROGRAM_VERSION)" \
-		--title "Release $(PROGRAM_VERSION)" \
-		--notes "$(NOTE)" \
-		$(wildcard $(DST_DIR)/*)
+	$(info gh release create "$(PROGRAM_VERSION)" --title "Release $(PROGRAM_VERSION)" --notes $(NOTE) $(RELEASE_FILES))
+	gh release create "$(PROGRAM_VERSION)" --title "Release $(PROGRAM_VERSION)" --notes $(NOTE) $(RELEASE_FILES);
 
 # === Testing ===
 
