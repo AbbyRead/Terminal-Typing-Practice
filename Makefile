@@ -255,7 +255,7 @@ $(LINUX_BIN_DIR):
 .PHONY: dist
 
 $(DST_DIR):
-    mkdir -p $@
+	mkdir -p $@
 
 dist: $(DST_DIR) macos-universal windows-x86_64 linux-x86_64
 	@echo "Copying and renaming binaries to $(DST_DIR)/"
