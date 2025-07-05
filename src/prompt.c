@@ -6,13 +6,17 @@
 #include "platform.h"
 #include "prompt.h"
 
-// Read user text from stdin into max_input string
+// Read user text from tty stdin into max_input string
 static size_t read_line(char *line_storage) {
 	if (!fgets(line_storage, MAX_LINE_LEN, stdin)) {
 		return 0; // EOF or error
 	}
 	
 	return strlen(line_storage);
+}
+
+static void erase_typed_line(void) {
+	printf("\033[1A\033[2K");  //  \033[1A (cursor up),  \033[2K (clear line)
 }
 
 line_array_t *prompt_user(const line_array_t *prompt, size_t start_line) {
@@ -35,7 +39,8 @@ line_array_t *prompt_user(const line_array_t *prompt, size_t start_line) {
 		if (input_length == 0 && feof(stdin)) {
 			break; // Only break on real EOF
 		}
-		append_line(user_lines, input_line, input_length); // check space and append
+		append_line(user_lines, input_line, input_length); // check space and append to structure member
+		erase_typed_line(); // removes the echo of the typed line from the terminal screen
 	}
 
 	return user_lines;
