@@ -13,6 +13,7 @@ bindir ?= $(prefix)/bin
 SRC_DIR       := src
 OBJ_DIR       := obj
 BIN_DIR       := bin
+DST_DIR       ?= dist
 INCLUDE_DIR   := include
 
 # Common Defaults
@@ -26,14 +27,25 @@ CFLAGS      += -fno-omit-frame-pointer
 LDFLAGS     += -Wl,-fatal_warnings
 
 # Version header generation for release numbering
+$(INCLUDE_DIR):
+	mkdir -p $@
+	
+GIT_HASH := $(shell git rev-parse --short HEAD)
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+
 VERSION_H := $(INCLUDE_DIR)/version.h
-version_h: | $(INCLUDE_DIR)
-	@echo '#ifndef VERSION_H' > $(VERSION_H)
-	@echo '#define VERSION_H' >> $(VERSION_H)
-	@echo '' >> $(VERSION_H)
-	@echo '#define PROGRAM_VERSION "$(PROGRAM_VERSION)"' >> $(VERSION_H)
-	@echo '' >> $(VERSION_H)
-	@echo '#endif' >> $(VERSION_H)
+$(VERSION_H): | $(INCLUDE_DIR)
+	@echo "Generating version header: $@"
+	@cat > $@ << EOF
+#ifndef VERSION_H
+#define VERSION_H
+
+#define PROGRAM_VERSION "$(PROGRAM_VERSION)"
+#define GIT_COMMIT_HASH "$(GIT_HASH)"
+#define GIT_BRANCH "$(GIT_BRANCH)"
+
+#endif /* VERSION_H */
+EOF
 
 .PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
         windows windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
@@ -239,10 +251,14 @@ dist: clean all $(VERSION_H) | $(DST_DIR)
 
 # GitHub release automation
 NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
+IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
+RELEASE_FLAGS := $(if $(IS_PRERELEASE),--prerelease,)
+
 release: dist
 	gh release create $(PROGRAM_VERSION) \
 		--title "Release $(PROGRAM_VERSION)" \
 		--notes "$(NOTE)" \
+		$(RELEASE_FLAGS) \
 		$(wildcard $(DST_DIR)/*)
 
 # === Testing ===
