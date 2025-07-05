@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "platform.h"
 #include "buffers.h"
 #include "options.h"
 #include "version.h"
@@ -61,50 +62,39 @@ void print_usage(const char *progname) {
 	"  %s [options] -           Source from piping/redirection\n"
 	"  %s [options]             Source from OS copy/paste clipboard\n\n",
 	progname, progname, progname);
+
 	puts("Options:");
 
 	for (int i = 0; opt_usage[i].opt.name != NULL; ++i) {
-		char *text = NULL;
 		const struct option *o = &opt_usage[i].opt;
-		int char_count = 2;
-		printf("  ");
+		char opt_str[64] = {0};
+
+		// Build option string like "-s, --start <line_number>"
 		if (o->val && isprint(o->val)) {
-			asprintf(&text, "-%c, ", o->val);
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
+			snprintf(opt_str, sizeof(opt_str), "-%c, --%s", o->val, o->name);
+		} else {
+			snprintf(opt_str, sizeof(opt_str), "--%s", o->name);
 		}
 
-		asprintf(&text, "--%s", o->name);
-		printf("%s", text);
-		char_count += strlen(text);
-		free(text);
-		text = NULL;
-		
+		// Add argument if needed
 		if (o->has_arg == required_argument) {
-			asprintf(&text, " <%s>", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
+			strncat(opt_str, " <", sizeof(opt_str) - strlen(opt_str) - 1);
+			strncat(opt_str, opt_usage[i].arg ? opt_usage[i].arg : "ARG", sizeof(opt_str) - strlen(opt_str) - 1);
+			strncat(opt_str, ">", sizeof(opt_str) - strlen(opt_str) - 1);
 		} else if (o->has_arg == optional_argument) {
-			asprintf(&text, " [<%s>]", opt_usage[i].arg ? opt_usage[i].arg : "ARG");
-			printf("%s", text);
-			char_count += strlen(text);
-			free(text);
-			text = NULL;
+			strncat(opt_str, " [<", sizeof(opt_str) - strlen(opt_str) - 1);
+			strncat(opt_str, opt_usage[i].arg ? opt_usage[i].arg : "ARG", sizeof(opt_str) - strlen(opt_str) - 1);
+			strncat(opt_str, ">]", sizeof(opt_str) - strlen(opt_str) - 1);
 		}
-		int pad_length = 32 - char_count;
-		if (opt_usage[i].desc)
-			printf("%*s%s", pad_length, " ", opt_usage[i].desc);
 
-		printf("\n");
+		// Print formatted option and description
+		printf("  %-32s %s\n", opt_str, opt_usage[i].desc);
 	}
+
 	printf("\nExamples:\n"
 	"  %s -s 10 myfile.txt      Start at line 10 from file\n"
 	"  %s -s -3 -               Start 3 lines from end, read from stdin\n"
-	"  %s                       Read from clipboard, start at line 1\n", 
+	"  %s                       Read from clipboard, start at line 1\n",
 	progname, progname, progname);
 }
 
