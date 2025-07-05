@@ -47,26 +47,22 @@ linux: $(VERSION_H) linux-x86_64
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
 	@if [ -z "$(PROGRAM_VERSION)" ]; then \
-		cat > $@ << EOF
-#ifndef VERSION_H
-#define VERSION_H
-
-#define GIT_COMMIT_HASH "$(GIT_HASH)"
-#define GIT_BRANCH "$(GIT_BRANCH)"
-
-#endif /* VERSION_H */
-EOF
+		echo '#ifndef VERSION_H' > $@; \
+		echo '#define VERSION_H' >> $@; \
+		echo '' >> $@; \
+		echo '#define GIT_COMMIT_HASH "$(GIT_HASH)"' >> $@; \
+		echo '#define GIT_BRANCH "$(GIT_BRANCH)"' >> $@; \
+		echo '' >> $@; \
+		echo '#endif /* VERSION_H */' >> $@; \
 	else \
-		cat > $@ << EOF
-#ifndef VERSION_H
-#define VERSION_H
-
-#define PROGRAM_VERSION "$(PROGRAM_VERSION)"
-#define GIT_COMMIT_HASH "$(GIT_HASH)"
-#define GIT_BRANCH "$(GIT_BRANCH)"
-
-#endif /* VERSION_H */
-EOF
+		echo '#ifndef VERSION_H' > $@; \
+		echo '#define VERSION_H' >> $@; \
+		echo '' >> $@; \
+		echo '#define PROGRAM_VERSION "$(PROGRAM_VERSION)"' >> $@; \
+		echo '#define GIT_COMMIT_HASH "$(GIT_HASH)"' >> $@; \
+		echo '#define GIT_BRANCH "$(GIT_BRANCH)"' >> $@; \
+		echo '' >> $@; \
+		echo '#endif /* VERSION_H */' >> $@; \
 	fi
 
 .PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
