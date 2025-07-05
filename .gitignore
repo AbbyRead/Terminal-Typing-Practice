@@ -17,6 +17,9 @@ obj/
 bin/
 dst/
 build/
+artifacts/
+share/
+release/
 
 # Logs and temp files
 *.log

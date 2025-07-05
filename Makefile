@@ -3,6 +3,10 @@
 PROGRAM_NAME	:= typebelow
 PROGRAM_VERSION ?= v1.3.0
 
+.PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
+        windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 version\
+		clean clean-macos clean-windows clean-linux clean-test test
+
 # === GNU Standard Variables ===
 INSTALL ?= install    # GNU: support 'install' variable
 DEST_DIR ?= /usr/local  # GNU: standard install prefix
@@ -14,7 +18,7 @@ INSTALL_DIR ?= $(DEST_DIR)/bin
 SRC_DIR       := src
 OBJ_DIR       := obj
 BIN_DIR       := bin
-DST_DIR       ?= dst
+DST_DIR       ?= share
 INCLUDE_DIR   := include
 
 # Common Defaults
@@ -46,30 +50,16 @@ macos: $(VERSION_H) macos-arm64 macos-x86_64 macos-universal
 windows: $(VERSION_H) windows-x86_64 windows-i686 windows-arm64
 linux: $(VERSION_H) linux-x86_64
 
+version: $(VERSION_H)
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
-	if [ -z "$(PROGRAM_VERSION)" ]; then \
-		echo '#ifndef VERSION_H' > $@; \
-		echo '#define VERSION_H' >> $@; \
-		echo '' >> $@; \
-		echo '#define GIT_COMMIT_HASH "$(GIT_HASH)"' >> $@; \
-		echo '#define GIT_BRANCH "$(GIT_BRANCH)"' >> $@; \
-		echo '' >> $@; \
-		echo '#endif /* VERSION_H */' >> $@; \
-	else \
 		echo '#ifndef VERSION_H' > $@; \
 		echo '#define VERSION_H' >> $@; \
 		echo '' >> $@; \
 		echo '#define PROGRAM_VERSION "$(PROGRAM_VERSION)"' >> $@; \
-		echo '#define GIT_COMMIT_HASH "$(GIT_HASH)"' >> $@; \
-		echo '#define GIT_BRANCH "$(GIT_BRANCH)"' >> $@; \
 		echo '' >> $@; \
 		echo '#endif /* VERSION_H */' >> $@; \
-	fi
 
-.PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
-        windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
-		clean clean-macos clean-windows clean-linux clean-test test
 
 # === Meta Targets ===
 
@@ -263,7 +253,7 @@ $(LINUX_BIN_DIR):
 $(DST_DIR):
 	mkdir -p $@
 
-dist: macos windows linux | $(DST_DIR) $(VERSION_H)
+dist: macos windows linux | $(DST_DIR)
 	@for f in $(shell find $(BIN_DIR) -mindepth 2 -type f); do \
 		dirname=$$(basename $$(dirname $$f)); \
 		filename=$$(basename $$f); \
@@ -277,7 +267,7 @@ NOTE ?= "Automated release of version $(PROGRAM_VERSION)"
 
 RELEASE_FILES := $(wildcard $(DST_DIR)/*)
 
-release: dist
+release: dist | version
 	@echo "Creating GitHub release for version $(PROGRAM_VERSION)"
 	$(info gh release create "$(PROGRAM_VERSION)" --title "Release $(PROGRAM_VERSION)" --notes $(NOTE) $(RELEASE_FILES))
 	gh release create "$(PROGRAM_VERSION)" --title "Release $(PROGRAM_VERSION)" --notes $(NOTE) $(RELEASE_FILES);
