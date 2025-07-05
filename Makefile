@@ -67,7 +67,7 @@ $(VERSION_H): | $(INCLUDE_DIR)
 		echo '#endif /* VERSION_H */' >> $@; \
 	fi
 
-.PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
+.PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
         windows windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
 		clean clean-macos clean-windows clean-linux clean-test test
 
@@ -82,13 +82,11 @@ install:
 uninstall:
 	rm -f $(INSTALL_DIR)/$(PROGRAM_NAME)  # GNU: uninstall target
 
-distclean: clean
-	rm -f $(VERSION_H)  # GNU: remove generated config files too
 
 check: test  # GNU: 'check' is the standard name for running tests
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(DST_DIR) $(VERSION_H)
 
 # === Source Files ===
 
@@ -260,7 +258,7 @@ $(DST_DIR):
 	mkdir -p $@
 
 FILES := $(shell find $(BIN_DIR) -mindepth 2 -type f)
-dist: macos windows linux | $(DST_DIR)
+dist: macos windows linux | $(DST_DIR) $(VERSION_H)
 	@for f in $(FILES); do \
 		dirname=$$(basename $$(dirname $$f)); \
 		filename=$$(basename $$f); \
