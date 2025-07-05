@@ -48,7 +48,7 @@ linux: $(VERSION_H) linux-x86_64
 
 $(VERSION_H): | $(INCLUDE_DIR)
 	@echo "Generating version header: $@"
-	@if [ -z "$(PROGRAM_VERSION)" ]; then \
+	if [ -z "$(PROGRAM_VERSION)" ]; then \
 		echo '#ifndef VERSION_H' > $@; \
 		echo '#define VERSION_H' >> $@; \
 		echo '' >> $@; \
@@ -68,7 +68,7 @@ $(VERSION_H): | $(INCLUDE_DIR)
 	fi
 
 .PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
-        windows windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
+        windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 \
 		clean clean-macos clean-windows clean-linux clean-test test
 
 # === Meta Targets ===
@@ -172,7 +172,7 @@ WIN_TARGET_x86_64 := x86_64-w64-windows-gnu
 WIN_SYSROOT_x86_64 := $(LLVM_MINGW_ROOT)/x86_64-w64-mingw32
 WIN_CFLAGS_x86_64 := --target=$(WIN_TARGET_x86_64) --sysroot=$(WIN_SYSROOT_x86_64)
 WIN_LDFLAGS_x86_64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIR_x86_64 := $(OBJ_DIR)/win-x86_64
+WIN_OBJ_DIR_x86_64 := $(OBJ_DIR)/windows-x86_64
 WIN_OBJS_x86_64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_x86_64)/%.o,$(WIN_SRCS))
 
 # i686 (32-bit)
@@ -180,7 +180,7 @@ WIN_TARGET_i686 := i686-w64-windows-gnu
 WIN_SYSROOT_i686 := $(LLVM_MINGW_ROOT)/i686-w64-mingw32
 WIN_CFLAGS_i686 := --target=$(WIN_TARGET_i686) --sysroot=$(WIN_SYSROOT_i686)
 WIN_LDFLAGS_i686 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIR_i686 := $(OBJ_DIR)/win-i686
+WIN_OBJ_DIR_i686 := $(OBJ_DIR)/windows-i686
 WIN_OBJS_i686 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_i686)/%.o,$(WIN_SRCS))
 
 # arm64
@@ -188,7 +188,7 @@ WIN_TARGET_arm64 := aarch64-w64-windows-gnu
 WIN_SYSROOT_arm64 := $(LLVM_MINGW_ROOT)/aarch64-w64-mingw32
 WIN_CFLAGS_arm64 := --target=$(WIN_TARGET_arm64) --sysroot=$(WIN_SYSROOT_arm64)
 WIN_LDFLAGS_arm64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/win-arm64
+WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/windows-arm64
 WIN_OBJS_arm64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_arm64)/%.o,$(WIN_SRCS))
 WIN_OBJ_DIRS := $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64)
 
@@ -213,17 +213,23 @@ $(WIN_OBJ_DIR_arm64)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR) $(VERSION_H)
 $(WIN_BIN_DIR):
 	@mkdir -p $@
 
-windows-x86_64: $(WIN_BIN_DIR) $(WIN_OBJS_x86_64)
+# Individual executable targets (real file targets)
+$(WIN_BIN_DIR)/x86_64.exe: $(WIN_OBJS_x86_64) | $(WIN_BIN_DIR)
 	@echo "Linking Windows x86_64 binary"
-	$(WIN_CC) --target=$(WIN_TARGET_x86_64) -fuse-ld=lld $(WIN_OBJS_x86_64) $(WIN_LDFLAGS_x86_64) -o $(WIN_BIN_DIR)/x86_64.exe
+	$(WIN_CC) --target=$(WIN_TARGET_x86_64) -fuse-ld=lld $^ $(WIN_LDFLAGS_x86_64) -o $@
 
-windows-i686: $(WIN_BIN_DIR) $(WIN_OBJS_i686)
+$(WIN_BIN_DIR)/i686.exe: $(WIN_OBJS_i686) | $(WIN_BIN_DIR)
 	@echo "Linking Windows i686 binary"
-	$(WIN_CC) --target=$(WIN_TARGET_i686) -fuse-ld=lld $(WIN_OBJS_i686) $(WIN_LDFLAGS_i686) -o $(WIN_BIN_DIR)/i686.exe
+	$(WIN_CC) --target=$(WIN_TARGET_i686) -fuse-ld=lld $^ $(WIN_LDFLAGS_i686) -o $@
 
-windows-arm64: $(WIN_BIN_DIR) $(WIN_OBJS_arm64)
+$(WIN_BIN_DIR)/arm64.exe: $(WIN_OBJS_arm64) | $(WIN_BIN_DIR)
 	@echo "Linking Windows arm64 binary"
-	$(WIN_CC) --target=$(WIN_TARGET_arm64) -fuse-ld=lld $(WIN_OBJS_arm64) $(WIN_LDFLAGS_arm64) -o $(WIN_BIN_DIR)/arm64.exe
+	$(WIN_CC) --target=$(WIN_TARGET_arm64) -fuse-ld=lld $^ $(WIN_LDFLAGS_arm64) -o $@
+
+# These targets become aliases (optional, for grouping)
+windows-x86_64: $(WIN_BIN_DIR)/x86_64.exe
+windows-i686:   $(WIN_BIN_DIR)/i686.exe
+windows-arm64:  $(WIN_BIN_DIR)/arm64.exe
 
 clean-windows:
 	rm -rf $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64) $(WIN_BIN_DIR)
@@ -257,9 +263,8 @@ $(LINUX_BIN_DIR):
 $(DST_DIR):
 	mkdir -p $@
 
-FILES := $(shell find $(BIN_DIR) -mindepth 2 -type f)
 dist: macos windows linux | $(DST_DIR) $(VERSION_H)
-	@for f in $(FILES); do \
+	@for f in $(shell find $(BIN_DIR) -mindepth 2 -type f); do \
 		dirname=$$(basename $$(dirname $$f)); \
 		filename=$$(basename $$f); \
 		newname="$(PROGRAM_NAME)-$(PROGRAM_VERSION)-$$dirname-$$filename"; \
