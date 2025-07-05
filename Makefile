@@ -2,6 +2,11 @@ PROGRAM_VERSION ?= E0.0.0
 .DEFAULT_GOAL := macos-arm64
 .SILENT:
 
+# === GNU Standard Variables ===
+INSTALL ?= install    # GNU: support 'install' variable
+prefix ?= /usr/local  # GNU: standard install prefix
+bindir ?= $(prefix)/bin
+
 # === Project Structure ===
 
 # Common Folders
@@ -30,10 +35,24 @@ version_h: | $(INCLUDE_DIR)
 	@echo '' >> $(VERSION_H)
 	@echo '#endif' >> $(VERSION_H)
 
-.PHONY: all macos-arm64 macos-x86_64 macos-universal\
-        windows windows-x86_64 windows-arm64 windows-i686 clean clean-macos clean-windows
+.PHONY: all install uninstall distclean check macos-arm64 macos-x86_64 macos-universal \
+        windows windows-x86_64 windows-arm64 windows-i686 clean clean-macos clean-windows clean-test test
+
+# === Meta Targets ===
 
 all: macos windows
+
+install:
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -m 755 $(BIN_DIR)/macos/universal $(DESTDIR)$(bindir)/yourprog  # GNU: standard install
+
+uninstall:
+	rm -f $(DESTDIR)$(bindir)/yourprog  # GNU: uninstall target
+
+distclean: clean
+	rm -f $(VERSION_H)  # GNU: remove generated config files too
+
+check: test  # GNU: 'check' is the standard name for running tests
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
@@ -101,7 +120,7 @@ macos-universal: macos-arm64 macos-x86_64
 		-output $(MACOS_BIN_DIR)/universal
 
 clean-macos:
-	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_x86_64) $(MAC_BIN_DIR)
+	rm -rf $(MACOS_OBJ_DIR_arm64) $(MACOS_OBJ_DIR_x86_64) $(MACOS_BIN_DIR)
 
 # === Cross-compilation to Windows ===
 
@@ -137,9 +156,9 @@ WIN_TARGET_arm64 := aarch64-w64-windows-gnu
 WIN_SYSROOT_arm64 := $(LLVM_MINGW_ROOT)/aarch64-w64-mingw32
 WIN_CFLAGS_arm64 := --target=$(WIN_TARGET_arm64) --sysroot=$(WIN_SYSROOT_arm64)
 WIN_LDFLAGS_arm64 := -fuse-ld=lld -Wl,--entry=mainCRTStartup -Wl,--subsystem,console
-WIN_OBJ_DIRS := $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64)
 WIN_OBJ_DIR_arm64 := $(OBJ_DIR)/win-arm64
 WIN_OBJS_arm64 := $(patsubst $(SRC_DIR)/%.c,$(WIN_OBJ_DIR_arm64)/%.o,$(WIN_SRCS))
+WIN_OBJ_DIRS := $(WIN_OBJ_DIR_x86_64) $(WIN_OBJ_DIR_i686) $(WIN_OBJ_DIR_arm64)
 
 $(OBJ_DIR):
 	@mkdir -p $@
@@ -184,8 +203,6 @@ TEST_SRC       := $(TEST_DIR)/test.c
 TEST_BIN       := $(BIN_DIR)/test
 TEST_FILE      := $(TEST_DIR)/testfile.txt
 
-.PHONY: test
-
 test: $(TEST_BIN) $(TEST_FILE)
 	@echo "Running test suite..."
 	@$(TEST_BIN)
@@ -201,8 +218,6 @@ $(TEST_FILE):
 	@echo "Line 3" >> $@
 	@echo "Line 4" >> $@
 	@echo "Line 5" >> $@
-
-.PHONY: clean-test
 
 clean-test:
 	rm -f $(TEST_BIN) $(TEST_FILE)
