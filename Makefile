@@ -296,14 +296,9 @@ IS_PRERELEASE := $(findstring -, $(PROGRAM_VERSION))
 
 release: dist
 	@echo "Creating GitHub release for version $(PROGRAM_VERSION)"
-	@PRERELEASE_FLAG=""; \
-	if echo "$(PROGRAM_VERSION)" | grep -q -e '-'; then \
-		PRERELEASE_FLAG="--prerelease"; \
-	fi; \
-	gh release create "$(PROGRAM_VERSION)" \
+	@gh release create "$(PROGRAM_VERSION)" \
 		--title "Release $(PROGRAM_VERSION)" \
 		--notes "$(NOTE)" \
-		$$PRERELEASE_FLAG \
 		$(wildcard $(DST_DIR)/*)
 
 # === Testing ===
