@@ -2,6 +2,7 @@
 .SILENT:
 PROGRAM_NAME	:= typebelow
 PROGRAM_VERSION ?= v1.3.0
+INSTALL_DIR := ~/bin
 
 .PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
         windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 version\
@@ -65,7 +66,7 @@ $(VERSION_H): | $(INCLUDE_DIR)
 
 all: macos windows linux
 
-install:
+install: $(BIN_DIR)/macos/universal
 	$(INSTALL) -d $(INSTALL_DIR)
 	$(INSTALL) -m 755 $(BIN_DIR)/macos/universal $(INSTALL_DIR)/$(PROGRAM_NAME)  # GNU: standard install
 
