@@ -1,10 +1,11 @@
 .DEFAULT_GOAL := macos-arm64
 .SILENT:
+PROJECT_NAME	:= TypeBelow
 PROGRAM_NAME	:= typebelow
 PROGRAM_VERSION ?= v1.3.0
 INSTALL_DIR := ~/bin
 
-.PHONY: all install uninstall check macos-arm64 macos-x86_64 macos-universal \
+.PHONY: all manpage install uninstall check macos-arm64 macos-x86_64 macos-universal \
         windows-x86_64 windows-arm64 windows-i686 linux linux-x86_64 version\
 		clean clean-macos clean-windows clean-linux clean-test test
 
@@ -21,6 +22,7 @@ OBJ_DIR       := obj
 BIN_DIR       := bin
 DST_DIR       ?= share
 INCLUDE_DIR   := include
+DOC_DIR       := docs
 
 # Common Defaults
 CC          ?= clang
@@ -78,6 +80,14 @@ check: test  # GNU: 'check' is the standard name for running tests
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR) $(DST_DIR) $(VERSION_H)
+
+manpage: $(DOC_DIR)/$(PROGRAM_NAME).1
+$(DOC_DIR):
+	@mkdir -p $@
+$(DOC_DIR)/$(PROGRAM_NAME).1: $(BIN_DIR)/macos/universal | $(DOC_DIR)
+	@ln -s bin/macos/universal ./typebelow
+	@PROGRAM=typebelow help2man --output=$@ --name="$(PROJECT_NAME)" --no-discard-stderr -- ./typebelow
+	@rm ./typebelow
 
 # === Source Files ===
 
