@@ -1,14 +1,13 @@
 #!/bin/bash
 
 # Check if bat is installed
-if ! command -v bat &> /dev/null; then
+if ! command -v bat &>/dev/null; then
 	echo "Error: 'bat' command not found."
 	echo "Please install bat to use this script."
 	echo "Visit https://github.com/sharkdp/bat for installation instructions."
 	exit 1
 fi
 
-# Function to check if stdin is coming from a pipe
 stdin_has_data() {
 	! [ -t 0 ]
 }
@@ -21,24 +20,26 @@ else
 	input=$(pbpaste)
 fi
 
-# Temp file for bat coloring
 tempfile=$(mktemp)
 
-# Use bat to colorize and iterate line by line
+# Colorize source text line and user input line after on repeat
 echo "$input" | bat -pp --force-colorization --language=C | while IFS= read -r line; do
-	# Print the original line
+	# Print the line and save cursor position
 	echo -e "$line"
+	tput sc # Save cursor position
 
-	# Read user input without prompt (silent inline retyping)
-	read -r -p "" user_input < /dev/tty
+	# Read user input (from real terminal)
+	read -r -p "" user_input </dev/tty
 
-	# Save user input to temp file and colorize
-	echo "$user_input" > "$tempfile"
+	# Save user input to temp file
+	echo "$user_input" >"$tempfile"
 
-	# Move cursor up one line, clear it, and print the recolored user input
-	tput cuu1         # move cursor up
-	tput el           # clear to end of line
+	# Restore cursor, clear line(s), and reprint colored input
+	tput rc
+	tput cuu1
+	tput el
 	bat -pp --force-colorization --language=C "$tempfile"
+	echo ""
 done
 
 rm "$tempfile"
