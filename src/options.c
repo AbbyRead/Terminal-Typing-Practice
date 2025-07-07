@@ -99,7 +99,7 @@ void print_usage(const char *progname) {
 	progname, progname, progname);
 }
 
-int parse_options(int argc, char **argv, invocation_t *invo) {
+int parse_options(invocation_t *invo, int argc, char **argv) {
 	int option;  // cli option character value
 	
 	while ((option = getopt_long(argc, argv, "hs:v", long_opts, NULL)) != -1) {

@@ -3,6 +3,6 @@
 
 #include "definitions.h"
 
-int parse_options(int argc, char **argv, invocation_t *invo);
+int parse_options(invocation_t *invo, int argc, char **argv);
 
 #endif

@@ -11,7 +11,7 @@
 #include "version.h"
 
 static void invocation_init(invocation_t *prog, int argc, char **argv) {
-	(void)argc;
+	(void)argc;  // unused (for now?) but welcome to stay
 	platform_initialize(prog);
 	char dir_separator = (prog->os == WINDOWS) ? '\\' : '/';
 	prog->start_line = 1;
@@ -26,7 +26,7 @@ static void invocation_init(invocation_t *prog, int argc, char **argv) {
 int main(int argc, char *argv[]) {
 	invocation_t invocation;
 	invocation_init(&invocation, argc, argv);
-	parse_options(argc, argv, &invocation);
+	parse_options(&invocation, argc, argv);
 
 	text_buffer_t *copy_of_source = NULL;
 	line_array_t  *prompt_lines   = NULL;
