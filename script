@@ -132,7 +132,7 @@ term_cols=$(tput cols)
 
 # Display and process line-by-line
 bat -pp --force-colorization --language="$language" "$bat_input_file" | while IFS= read -r line; do
-	echo -e "$line"
+	printf '%s\n' "$line"
 
 	# Read user input from terminal
 	IFS= read -r user_input < /dev/tty
