@@ -49,6 +49,7 @@ map_enry_to_bat() {
 # Ensure cursor is restored and temp file cleaned on exit
 cleanup() {
 	tput cnorm
+	rm -f "$bat_input_file"
 	rm -f "$tempfile"
 	exit
 }
@@ -102,26 +103,25 @@ done
 
 # Determine input and detect language
 tempfile=$(mktemp)
+bat_input_file=$(mktemp)
 if [ -n "$file_arg" ]; then
 	if [ ! -f "$file_arg" ]; then
 		echo "Error: File not found: $file_arg"
 		exit 1
 	fi
 	bat_input_file="$file_arg"
-	if [ -z "$language" ] && $enry_available && $jq_available; then
-		detected_lang=$(enry -json -mode=file "$file_arg" | jq -r '.language')
-		detected_lang=$(map_enry_to_bat "$detected_lang")
-		[ -n "$detected_lang" ] && language="$detected_lang"
-	fi
 elif stdin_has_data; then
-	cat >"$tempfile"
-	bat_input_file="$tempfile"
+	cat >"$bat_input_file"
 elif command -v pbpaste &>/dev/null; then
-	pbpaste > "$tempfile"
-	bat_input_file="$tempfile"
+	pbpaste > "$bat_input_file"
 else
 	echo "Error: No input provided."
 	exit 1
+fi
+if [ -z "$language" ] && $enry_available && $jq_available; then
+	detected_lang=$(enry -json -mode=file "$bat_input_file" | jq -r '.language')
+	detected_lang=$(map_enry_to_bat "$detected_lang")
+	[ -n "$detected_lang" ] && language="$detected_lang"
 fi
 
 # Fallback language
