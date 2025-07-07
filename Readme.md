@@ -5,7 +5,7 @@ This program reads lines from a specified text source and expects that you will 
 ## Features
 - Accepts an optional starting line number to begin practicing from any line.
 - Accepts negative starting line number to offset from the end of the source text.
-- Reports ending line number to let you easily start where you left off next time.
+- ~~Reports ending line number to let you easily start where you left off next time.~~  (to do)
 - Padded bottom for comfort.  Typing at the very edge of the terminal is no fun.
 
 ## Anti-Features
