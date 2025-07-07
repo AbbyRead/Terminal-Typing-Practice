@@ -5,12 +5,7 @@
 #include "buffers.h"
 #include "platform.h"
 #include "prompt.h"
-
-#define cursor_up_line() printf("\033[1A")
-#define cursor_down_line() printf("\033[1B")
-#define print_inverted(text) printf("\033[7m%s\033[0m\033[1A", text)
-#define print_normal(text) printf("%s\033[1A", text)
-#define clear_line() do { printf("\033[2K\r"); fflush(stdout); } while (0)
+#include "animation.h"
 
 static void position_input_line(void) {
 		int height = get_terminal_height();
@@ -21,33 +16,6 @@ static void position_input_line(void) {
 		}
 		move_cursor_up(pad_lines);
 		fflush(stdout);
-}
-
-static void animate_text_replacement(const line_array_t *prompt, line_array_t *user_lines) {
-	char *text = user_lines->line[user_lines->filled - 1];
-	char *prompt_text = prompt->line[user_lines->filled - 1];
-	(void)prompt_text;
-	// User-typed line includes a newline character at the end (my print macros undo that)
-
-	// The typed line of text flashes before moving upward and replacing the prompt line
-	cursor_up_line(); // after input from user, move back up to the typed line
-	print_inverted(text); // invert user's typed line
-	platform_delay_ms(200); // delay for animation anticipation
-	cursor_up_line();
-	clear_line();
-	print_inverted(text);
-	cursor_down_line();
-	clear_line();
-	cursor_down_line();
-	fflush(stdout);
-	platform_delay_ms(100);
-	cursor_up_line();
-	cursor_up_line();
-	print_normal(text);
-	cursor_down_line();
-	cursor_down_line();
-	fflush(stdout);
-	platform_delay_ms(50);
 }
 
 // Read user text from tty stdin into max_input string
@@ -76,17 +44,14 @@ line_array_t *prompt_user(const line_array_t *prompt, size_t start_line) {
 	}
 
 	for (size_t i = start_line - 1; i < prompt->filled; ++i) {
-		printf("\033[1A%s\n", prompt->line[i]);
+		position_input_line();
+		printf("%s\n", prompt->line[i]);
 		size_t input_length = read_line(input_line);
 		if (input_length == 0 && feof(stdin)) {
 			break; // Only break on real EOF
 		}
 		append_line(user_lines, input_line, input_length); // check space and append to structure member
-		position_input_line();
-		// check if input is blank
-		if (strcmp(user_lines->line[user_lines->filled - 1], "\n")) {
-			animate_text_replacement(prompt, user_lines);
-		}
+		printf("\n");
 	}
 
 	return user_lines;
