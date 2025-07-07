@@ -6,6 +6,9 @@ if ! command -v bat &>/dev/null; then
 	exit 1
 fi
 
+# Ensure cursor is restored on exit or interruption
+trap 'tput cnorm; exit' INT TERM EXIT
+
 stdin_has_data() {
 	! [ -t 0 ]
 }
