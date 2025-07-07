@@ -1,6 +1,6 @@
 # TypeBelow
 
-This program reads lines from a specified text source and expects that you will follow-along below it by typing the same text.
+This program copies in some text, prints a line, lets you retype it, and does that until EOF.
 
 ## Features
 - Accepts an optional starting line number to begin practicing from any line.
@@ -30,3 +30,26 @@ Examples:
   typebelow -s -3 -            # Start 3 lines from end, read from stdin
   typebelow                    # Read from clipboard, start at line 1
 ```
+
+<br><br>
+
+# Special Bonus: Syntax-Colorizing Shell Script Version (requires bat)
+## Usage
+```bash
+cd colorized
+./color_tb [options] filename    # Source text from an existing file
+./color_tb [options]             # Source from clipboard or pipe/redirection
+```
+## Option
+```bash
+  -l <language>  # specify a programming language syntax
+  or
+  --language=<language>	 # to tell bat what language syntax to color it as
+  # Tip: use "bat -L" to get a list of available languages
+
+  Example usage:
+  ./color_tb -l sh example_input.c  # to use bash syntax instead of C syntax
+ ```
+## Additional Feature
+- Automatic dominant language syntax detection (requires jq and enry)
+	- You can still override by specifying a language
