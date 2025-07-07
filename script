@@ -79,12 +79,22 @@ echo "$input" | bat -pp --force-colorization --language="$language" | while IFS=
 
 	# Save and display colorized input
 	echo "$user_input" >"$tempfile"
+
+	# Hide cursor
+	tput civis
+
 	for ((i = 0; i < lines_up; i++)); do
 		tput cuu1
 		tput el
 	done
+
 	bat -pp --force-colorization --language="$language" "$tempfile"
+
+	# Show cursor
+	tput cnorm
+
 	echo ""
+
 done
 
 rm "$tempfile"
