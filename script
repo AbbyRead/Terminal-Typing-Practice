@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Check if bat is installed
 if ! command -v bat &>/dev/null; then
 	echo "Error: 'bat' command not found."
 	echo "Please install bat: https://github.com/sharkdp/bat"
@@ -62,6 +61,7 @@ stdin_has_data() {
 # Defaults
 language=""
 file_arg=""
+language_was_detected=false
 
 # Argument parsing
 while [[ $# -gt 0 ]]; do
@@ -121,11 +121,20 @@ fi
 if [ -z "$language" ] && $enry_available && $jq_available; then
 	detected_lang=$(enry -json -mode=file "$bat_input_file" | jq -r '.language')
 	detected_lang=$(map_enry_to_bat "$detected_lang")
-	[ -n "$detected_lang" ] && language="$detected_lang"
+	if [ -n "$detected_lang" ]; then
+		language="$detected_lang"
+		language_was_detected=true
+	fi
 fi
 
 # Fallback language
-[ -z "$language" ] && language="C"
+if [ -z "$language" ]; then
+	language="C"
+else
+	if [ "$language_was_detected" = true ]; then
+		echo "Detected language: $language"
+	fi
+fi
 
 # Terminal width
 term_cols=$(tput cols)
