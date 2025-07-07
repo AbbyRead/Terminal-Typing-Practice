@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Check if bat is installed
+if ! command -v bat &> /dev/null; then
+  echo "Error: 'bat' command not found."
+  echo "Please install bat: https://github.com/sharkdp/bat"
+  exit 1
+fi
+
+# Set the language for syntax highlighting
+LANGUAGE="C"  # Change to whatever language you're targeting
+
+# Set terminal to raw mode to capture character-by-character
+stty -echo -icanon time 0 min 1
+
+# Trap Ctrl+C to restore terminal
+trap "stty sane; echo; exit" INT
+
+# Buffer for user-typed input
+input=""
+
+# Clear screen once at start
+clear
+
+while true; do
+	tput sc
+  char=$(dd bs=1 count=1 2>/dev/null)
+  
+  # Exit on Ctrl+D
+  if [[ -z "$char" ]]; then
+    break
+  fi
+
+  # Handle backspace (ASCII 127)
+  if [[ $char == $'\x7f' ]]; then
+    input="${input%?}"  # Remove last character
+  else
+    input+="$char"
+  fi
+
+  # Clear line
+  tput civis
+  tput el && tput cr
+  # Echo input through bat for syntax highlighting
+  echo -n "$input" | bat --language="$LANGUAGE" --paging=never --force-colorization
+  tput cnorm
+done
+
+# Reset terminal to normal mode
+stty sane
+echo
