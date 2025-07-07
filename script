@@ -21,21 +21,24 @@ else
 	input=$(pbpaste)
 fi
 
-# Create a temp file for recoloring lines
+# Temp file for bat coloring
 tempfile=$(mktemp)
 
 # Use bat to colorize and iterate line by line
 echo "$input" | bat -pp --force-colorization --language=C | while IFS= read -r line; do
-	# Show the original line
+	# Print the original line
 	echo -e "$line"
 
-	# Prompt user for input
+	# Read user input without prompt (silent inline retyping)
 	read -r -p "" user_input < /dev/tty
 
 	# Save user input to temp file and colorize
 	echo "$user_input" > "$tempfile"
+
+	# Move cursor up one line, clear it, and print the recolored user input
+	tput cuu1         # move cursor up
+	tput el           # clear to end of line
 	bat -pp --force-colorization --language=C "$tempfile"
 done
 
-# Clean up
 rm "$tempfile"
