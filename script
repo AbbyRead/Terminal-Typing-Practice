@@ -2,26 +2,26 @@
 
 # Check if bat is installed
 if ! command -v bat &> /dev/null; then
-  echo "Error: 'bat' command not found."
-  echo "Please install bat to use this script."
-  echo "Visit https://github.com/sharkdp/bat for installation instructions."
-  exit 1
+	echo "Error: 'bat' command not found."
+	echo "Please install bat to use this script."
+	echo "Visit https://github.com/sharkdp/bat for installation instructions."
+	exit 1
 fi
 
 # Function to check if stdin is coming from a pipe
 function stdin_has_data() {
-  ! [ -t 0 ]
+	! [ -t 0 ]
 }
 
 if [ -n "$1" ]; then
-  # If a filename argument is provided, read from file
-  input=$(cat "$1")
+	# If a filename argument is provided, read from file
+	input=$(cat "$1")
 elif stdin_has_data; then
-  # If something is piped in, read from stdin
-  input=$(cat)
+	# If something is piped in, read from stdin
+	input=$(cat)
 else
-  # Otherwise, read from clipboard with pbpaste
-  input=$(pbpaste)
+	# Otherwise, read from clipboard with pbpaste
+	input=$(pbpaste)
 fi
 
 # Use bat to colorize, no paging
@@ -29,6 +29,6 @@ colored_output=$(echo "$input" | bat -pp --force-colorization --language=C)
 
 # Output line by line with prompt to type and press Enter
 echo "$colored_output" | while IFS= read -r line; do
-  echo -e "$line"
-  read -r -p "" < /dev/tty
+echo -e "$line"
+read -r -p "" < /dev/tty
 done
