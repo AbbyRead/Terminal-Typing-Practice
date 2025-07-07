@@ -7,21 +7,59 @@ if ! command -v bat &>/dev/null; then
 	exit 1
 fi
 
-# Check if enry is installed
-if ! command -v enry &>/dev/null; then
-	echo "Error: 'enry' command not found."
-	echo "Please install enry for automatic language detection: https://github.com/go-enry/enry"
-fi
+auto-detection_prerequisite() {
+    if command -v "$1" &>/dev/null; then
+        return 0
+    else
+        echo "Warning: '$1' not found. Install to auto-detect and use dominant language syntax."
+        return 1
+    fi
+}
 
-# Ensure cursor is restored on exit or interruption
-trap 'tput cnorm; exit' INT TERM EXIT
+jq_available=false
+enry_available=false
+
+auto-detection_prerequisite enry && enry_available=true
+auto-detection_prerequisite jq && jq_available=true
+
+# Map enry language names to bat language aliases
+map_enry_to_bat() {
+	local lang="$(echo "$1" | tr '[:upper:]' '[:lower:]')"  # lowercase input for case-insensitive matching
+	case "$lang" in
+		shell) echo "bash" ;;
+		c++) echo "cpp" ;;
+		c) echo "c" ;;
+		python) echo "python" ;;
+		go) echo "go" ;;
+		javascript) echo "javascript" ;;
+		typescript) echo "typescript" ;;
+		java) echo "java" ;;
+		rust) echo "rust" ;;
+		ruby) echo "ruby" ;;
+		html) echo "html" ;;
+		css) echo "css" ;;
+		json) echo "json" ;;
+		markdown) echo "md" ;;
+		makefile) echo "makefile" ;;
+		shellscript) echo "sh" ;;  # sometimes enry returns ShellScript
+		*) echo "$1" ;;  # fallback: pass through unmodified
+	esac
+}
+
+# Ensure cursor is restored and temp file cleaned on exit
+cleanup() {
+	tput cnorm
+	rm -f "$tempfile"
+	exit
+}
+trap cleanup INT TERM EXIT
 
 stdin_has_data() {
 	! [ -t 0 ]
 }
 
-# Default language
-language="C"
+# Defaults
+language=""
 file_arg=""
 
 # Argument parsing
@@ -62,13 +100,29 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-# Determine input
+# Determine input and auto-detect language if needed
 if [ -n "$file_arg" ]; then
+	if [ ! -f "$file_arg" ]; then
+		echo "Error: File not found: $file_arg"
+		exit 1
+	fi
 	input=$(cat "$file_arg")
+	if [ -z "$language" ] && [ "$enry_available" = true ]; then
+		detected_lang=$(enry -json -mode=file "$file_arg" | jq -r '.language')
+		detected_lang=$(map_enry_to_bat "$detected_lang")
+		if [ -n "$detected_lang" ]; then
+			language="$detected_lang"
+		fi
+	fi
 elif stdin_has_data; then
 	input=$(cat)
 else
 	input=$(pbpaste)
+fi
+
+# Fallback language
+if [ -z "$language" ]; then
+	language="C"
 fi
 
 tempfile=$(mktemp)
@@ -83,7 +137,7 @@ echo "$input" | bat -pp --force-colorization --language="$language" | while IFS=
 	# Read user input from terminal
 	IFS= read -r user_input < /dev/tty
 
-	# Calculate how many lines it wraps over
+	# Calculate line wraps
 	input_len=${#user_input}
 	lines_up=$(((input_len + term_cols - 1) / term_cols))
 
