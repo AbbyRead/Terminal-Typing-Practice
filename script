@@ -8,12 +8,12 @@ if ! command -v bat &>/dev/null; then
 fi
 
 auto-detection_prerequisite() {
-    if command -v "$1" &>/dev/null; then
-        return 0
-    else
-        echo "Warning: '$1' not found. Install to auto-detect and use dominant language syntax."
-        return 1
-    fi
+	if command -v "$1" &>/dev/null; then
+		return 0
+	else
+		echo "Warning: '$1' not found. Install to auto-detect and use dominant language syntax."
+		return 1
+	fi
 }
 
 jq_available=false
@@ -24,7 +24,7 @@ auto-detection_prerequisite jq && jq_available=true
 
 # Map enry language names to bat language aliases
 map_enry_to_bat() {
-	local lang="$(echo "$1" | tr '[:upper:]' '[:lower:]')"  # lowercase input for case-insensitive matching
+	local lang="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
 	case "$lang" in
 		shell) echo "bash" ;;
 		c++) echo "cpp" ;;
@@ -100,38 +100,38 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-# Determine input and auto-detect language if needed
+# Determine input and detect language
+tempfile=$(mktemp)
 if [ -n "$file_arg" ]; then
 	if [ ! -f "$file_arg" ]; then
 		echo "Error: File not found: $file_arg"
 		exit 1
 	fi
-	input=$(cat "$file_arg")
-	if [ -z "$language" ] && [ "$enry_available" = true ]; then
+	bat_input_file="$file_arg"
+	if [ -z "$language" ] && $enry_available && $jq_available; then
 		detected_lang=$(enry -json -mode=file "$file_arg" | jq -r '.language')
 		detected_lang=$(map_enry_to_bat "$detected_lang")
-		if [ -n "$detected_lang" ]; then
-			language="$detected_lang"
-		fi
+		[ -n "$detected_lang" ] && language="$detected_lang"
 	fi
 elif stdin_has_data; then
-	input=$(cat)
+	cat >"$tempfile"
+	bat_input_file="$tempfile"
+elif command -v pbpaste &>/dev/null; then
+	pbpaste > "$tempfile"
+	bat_input_file="$tempfile"
 else
-	input=$(pbpaste)
+	echo "Error: No input provided."
+	exit 1
 fi
 
 # Fallback language
-if [ -z "$language" ]; then
-	language="C"
-fi
-
-tempfile=$(mktemp)
+[ -z "$language" ] && language="C"
 
 # Terminal width
 term_cols=$(tput cols)
 
-# Process each line
-echo "$input" | bat -pp --force-colorization --language="$language" | while IFS= read -r line; do
+# Display and process line-by-line
+bat -pp --force-colorization --language="$language" "$bat_input_file" | while IFS= read -r line; do
 	echo -e "$line"
 
 	# Read user input from terminal
@@ -160,5 +160,3 @@ echo "$input" | bat -pp --force-colorization --language="$language" | while IFS=
 	echo ""
 
 done
-
-rm "$tempfile"
