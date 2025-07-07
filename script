@@ -8,6 +8,25 @@ if ! command -v bat &>/dev/null; then
 	exit 1
 fi
 
+# Send ESC [6n to request cursor position report
+# It will respond with something like: ^[[12;1R
+
+get_cursor_row() {
+  # Ask for cursor position
+  exec < /dev/tty
+  oldstty=$(stty -g)
+  stty -echo -icanon time 0 min 1
+  # Send request
+  printf '\033[6n' > /dev/tty
+
+  # Read response: ESC [ rows ; cols R
+  IFS=';' read -r _ row _
+
+  # Cleanup
+  stty "$oldstty"
+  echo "$row"
+}
+
 stdin_has_data() {
 	! [ -t 0 ]
 }
