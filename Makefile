@@ -2,7 +2,7 @@
 .SILENT:
 PROJECT_NAME	:= TypeBelow
 PROGRAM_NAME	:= typebelow
-PROGRAM_VERSION ?= v1.3.0
+PROGRAM_VERSION ?= v1.3.1
 INSTALL_DIR := ~/bin
 
 .PHONY: all manpage install uninstall check macos-arm64 macos-x86_64 macos-universal \
