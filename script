@@ -3,7 +3,14 @@
 # Check if bat is installed
 if ! command -v bat &>/dev/null; then
 	echo "Error: 'bat' command not found."
+	echo "Please install bat: https://github.com/sharkdp/bat"
 	exit 1
+fi
+
+# Check if enry is installed
+if ! command -v enry &>/dev/null; then
+	echo "Error: 'enry' command not found."
+	echo "Please install enry for automatic language detection: https://github.com/go-enry/enry"
 fi
 
 # Ensure cursor is restored on exit or interruption
