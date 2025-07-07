@@ -109,7 +109,7 @@ if [ -n "$file_arg" ]; then
 		echo "Error: File not found: $file_arg"
 		exit 1
 	fi
-	bat_input_file="$file_arg"
+	cat "$file_arg" > "$bat_input_file"
 elif stdin_has_data; then
 	cat >"$bat_input_file"
 elif command -v pbpaste &>/dev/null; then
