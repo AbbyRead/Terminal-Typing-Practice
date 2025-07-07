@@ -1,0 +1,171 @@
+#!/bin/bash
+
+if ! command -v bat &>/dev/null; then
+	echo "Error: 'bat' command not found."
+	echo "Please install bat: https://github.com/sharkdp/bat"
+	exit 1
+fi
+
+auto-detection_prerequisite() {
+	if command -v "$1" &>/dev/null; then
+		return 0
+	else
+		echo "Warning: '$1' not found. Install to auto-detect and use dominant language syntax."
+		return 1
+	fi
+}
+
+jq_available=false
+enry_available=false
+
+auto-detection_prerequisite enry && enry_available=true
+auto-detection_prerequisite jq && jq_available=true
+
+# Map enry language names to bat language aliases
+map_enry_to_bat() {
+	local lang="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+	case "$lang" in
+		shell) echo "bash" ;;
+		c++) echo "cpp" ;;
+		c) echo "c" ;;
+		python) echo "python" ;;
+		go) echo "go" ;;
+		javascript) echo "javascript" ;;
+		typescript) echo "typescript" ;;
+		java) echo "java" ;;
+		rust) echo "rust" ;;
+		ruby) echo "ruby" ;;
+		html) echo "html" ;;
+		css) echo "css" ;;
+		json) echo "json" ;;
+		markdown) echo "md" ;;
+		makefile) echo "makefile" ;;
+		shellscript) echo "sh" ;;  # sometimes enry returns ShellScript
+		*) echo "$1" ;;  # fallback: pass through unmodified
+	esac
+}
+
+# Ensure cursor is restored and temp file cleaned on exit
+cleanup() {
+	tput cnorm
+	rm -f "$bat_input_file"
+	rm -f "$tempfile"
+	exit
+}
+trap cleanup INT TERM EXIT
+
+stdin_has_data() {
+	! [ -t 0 ]
+}
+
+# Defaults
+language=""
+file_arg=""
+language_was_detected=false
+
+# Argument parsing
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--language=*)
+			language="${1#*=}"
+			shift
+			;;
+		-l)
+			shift
+			if [ -n "$1" ]; then
+				language="$1"
+				shift
+			else
+				echo "Error: Missing argument for -l"
+				exit 1
+			fi
+			;;
+		--language)
+			shift
+			if [ -n "$1" ]; then
+				language="$1"
+				shift
+			else
+				echo "Error: Missing argument for --language"
+				exit 1
+			fi
+			;;
+		-*)
+			echo "Unknown option: $1"
+			exit 1
+			;;
+		*)
+			file_arg="$1"
+			shift
+			;;
+	esac
+done
+
+# Determine input and detect language
+tempfile=$(mktemp)
+bat_input_file=$(mktemp)
+if [ -n "$file_arg" ]; then
+	if [ ! -f "$file_arg" ]; then
+		echo "Error: File not found: $file_arg"
+		exit 1
+	fi
+	cat "$file_arg" > "$bat_input_file"
+elif stdin_has_data; then
+	cat >"$bat_input_file"
+elif command -v pbpaste &>/dev/null; then
+	pbpaste > "$bat_input_file"
+else
+	echo "Error: No input provided."
+	exit 1
+fi
+if [ -z "$language" ] && $enry_available && $jq_available; then
+	detected_lang=$(enry -json -mode=file "$bat_input_file" | jq -r '.language')
+	detected_lang=$(map_enry_to_bat "$detected_lang")
+	if [ -n "$detected_lang" ]; then
+		language="$detected_lang"
+		language_was_detected=true
+	fi
+fi
+
+# Fallback language
+if [ -z "$language" ]; then
+	language="C"
+else
+	if [ "$language_was_detected" = true ]; then
+		echo "Detected language: $language"
+	fi
+fi
+
+# Terminal width
+term_cols=$(tput cols)
+
+# Display and process line-by-line
+bat -pp --force-colorization --language="$language" "$bat_input_file" | while IFS= read -r line; do
+	printf '%s\n' "$line"
+
+	# Read user input from terminal
+	IFS= read -r user_input < /dev/tty
+
+	# Calculate line wraps
+	input_len=${#user_input}
+	lines_up=$(((input_len + term_cols - 1) / term_cols))
+
+	# Save and display colorized input
+	echo "$user_input" >"$tempfile"
+
+	# Hide cursor
+	tput civis
+
+	for ((i = 0; i < lines_up; i++)); do
+		tput cuu1
+		tput el
+	done
+
+	bat -pp --force-colorization --language="$language" "$tempfile"
+
+	# Show cursor
+	tput cnorm
+
+	echo ""
+
+done
