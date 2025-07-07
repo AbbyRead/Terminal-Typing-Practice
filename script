@@ -10,8 +10,51 @@ stdin_has_data() {
 	! [ -t 0 ]
 }
 
-if [ -n "$1" ]; then
-	input=$(cat "$1")
+# Default language
+language="C"
+file_arg=""
+
+# Argument parsing
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--language=*)
+			language="${1#*=}"
+			shift
+			;;
+		-l)
+			shift
+			if [ -n "$1" ]; then
+				language="$1"
+				shift
+			else
+				echo "Error: Missing argument for -l"
+				exit 1
+			fi
+			;;
+		--language)
+			shift
+			if [ -n "$1" ]; then
+				language="$1"
+				shift
+			else
+				echo "Error: Missing argument for --language"
+				exit 1
+			fi
+			;;
+		-*)
+			echo "Unknown option: $1"
+			exit 1
+			;;
+		*)
+			file_arg="$1"
+			shift
+			;;
+	esac
+done
+
+# Determine input
+if [ -n "$file_arg" ]; then
+	input=$(cat "$file_arg")
 elif stdin_has_data; then
 	input=$(cat)
 else
@@ -24,29 +67,23 @@ tempfile=$(mktemp)
 term_cols=$(tput cols)
 
 # Process each line
-echo "$input" | bat -pp --force-colorization --language=C | while IFS= read -r line; do
-	# Show the original line
+echo "$input" | bat -pp --force-colorization --language="$language" | while IFS= read -r line; do
 	echo -e "$line"
 
-# Read user input from terminal, preserving indentation
-IFS= read -r user_input < /dev/tty
-
+	# Read user input from terminal
+	IFS= read -r user_input < /dev/tty
 
 	# Calculate how many lines it wraps over
 	input_len=${#user_input}
 	lines_up=$(((input_len + term_cols - 1) / term_cols))
 
-	# Save user input to file
+	# Save and display colorized input
 	echo "$user_input" >"$tempfile"
-
-	# Move up however many lines the input spanned, clear, and recolor
 	for ((i = 0; i < lines_up; i++)); do
-		tput cuu1 # move cursor up
-		tput el   # clear line
+		tput cuu1
+		tput el
 	done
-
-	# Print colored version
-	bat -pp --force-colorization --language=C "$tempfile"
+	bat -pp --force-colorization --language="$language" "$tempfile"
 	echo ""
 done
 
