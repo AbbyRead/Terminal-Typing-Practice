@@ -1,13 +1,18 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <io.h>
 #include <windows.h>
 
+#include "definitions.h"
 #include "platform.h"
 #include "buffers.h"
 
-enum Platform platform = WINDOWS;
+void platform_initialize(invocation_t *invo) {
+	setlocale(LC_CTYPE, "");
+	invo->os = WINDOWS;
+}
 
 void enable_virtual_terminal_processing(void) {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -18,11 +23,6 @@ void enable_virtual_terminal_processing(void) {
 
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hOut, dwMode);
-}
-
-void platform_initialize(void) {
-    // On Windows, you might want to set console mode or locale here if needed.
-    // For now, no special initialization needed.
 }
 
 void platform_delay_ms(int milliseconds) {

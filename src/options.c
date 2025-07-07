@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "definitions.h"
 #include "platform.h"
 #include "buffers.h"
 #include "options.h"
@@ -100,14 +101,11 @@ void print_usage(const char *progname) {
 
 int parse_options(int argc, char **argv, invocation_t *invo) {
 	int option;  // cli option character value
-	invo->start_line = 1;
-	invo->filename = NULL;
-	invo->mode = UNKNOWN;
 	
 	while ((option = getopt_long(argc, argv, "hs:v", long_opts, NULL)) != -1) {
 		switch(option) {
 		case 'h':  // print help text
-			print_usage(argv[0]);
+			print_usage(invo->name);
 			exit(EXIT_SUCCESS);
 		case 's':  // validate starting line number
 			if (atoi(optarg) == 0) {

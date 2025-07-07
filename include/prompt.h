@@ -1,6 +1,7 @@
 #ifndef PROMPT_H
 #define PROMPT_H
 
+#include "definitions.h"
 #include "buffers.h"
 
 #define MAX_LINE_LEN 2048

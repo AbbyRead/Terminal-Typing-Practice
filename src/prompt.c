@@ -26,6 +26,7 @@ static void position_input_line(void) {
 static void animate_text_replacement(const line_array_t *prompt, line_array_t *user_lines) {
 	char *text = user_lines->line[user_lines->filled - 1];
 	char *prompt_text = prompt->line[user_lines->filled - 1];
+	(void)prompt_text;
 	// User-typed line includes a newline character at the end (my print macros undo that)
 
 	// The typed line of text flashes before moving upward and replacing the prompt line

@@ -4,13 +4,13 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
+#include "definitions.h"
 #include "platform.h"
 #include "buffers.h"
 
-enum Platform platform = MACOS;
-
-void platform_initialize(void) {
+void platform_initialize(invocation_t *invo) {
 	setlocale(LC_CTYPE, "");
+	invo->os = MACOS;
 }
 
 void platform_delay_ms(int milliseconds) {

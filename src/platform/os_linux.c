@@ -6,14 +6,14 @@
 #include <locale.h>
 #include <sys/ioctl.h>
 
+#include "definitions.h"
 #include "buffers.h"
 #include "platform.h"
 #include "options.h"
 
-enum Platform platform = LINUX;
-
-void platform_initialize(void) {
+void platform_initialize(invocation_t *invo) {
 	setlocale(LC_CTYPE, "");
+	invo->os = LINUX;
 }
 
 void platform_delay_ms(int milliseconds) {

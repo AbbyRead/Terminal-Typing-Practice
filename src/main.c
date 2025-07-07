@@ -1,16 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "definitions.h"
+
 #include "buffers.h"
 #include "options.h"
 #include "platform.h"
 #include "prompt.h"
+#include "string.h"
 #include "version.h"
 
-int main(int argc, char *argv[]) {
-	platform_initialize();
+static void invocation_init(invocation_t *prog, int argc, char **argv) {
+	(void)argc;
+	platform_initialize(prog);
+	char dir_separator = (prog->os == WINDOWS) ? '\\' : '/';
+	prog->start_line = 1;
+	prog->filename = NULL;  // for when a source text is specified
+	prog->mode = UNKNOWN;	// assigned in options.c by parse_options()
 
+	// Get just the program name by itself:
+	char *name = strrchr(argv[0], dir_separator);
+	strcpy(prog->name, name ? name + 1 : argv[0]);
+}
+
+int main(int argc, char *argv[]) {
 	invocation_t invocation;
+	invocation_init(&invocation, argc, argv);
 	parse_options(argc, argv, &invocation);
 
 	text_buffer_t *copy_of_source = NULL;
